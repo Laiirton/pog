@@ -1,35 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Terminal, Code, Cpu } from 'lucide-react'
 
 export function OldschoolHackerGalleryComponent() {
-  const [images, setImages] = useState<string[]>([]);
-
-  useEffect(() => {
-    const loadImages = async () => {
-      const imageContext = import.meta.glob('../public/gallery/*.{png,jpg,jpeg,svg}');
-      const loadedImages = await Promise.all(
-        Object.values(imageContext).map((importImage: any) => importImage())
-      );
-      setImages(loadedImages.map((img) => img.default));
-    };
-    loadImages();
-  }, []);
-    };
-    loadImages();
-  }, []);
-
   const [currentIndex, setCurrentIndex] = useState(0)
   const [typedText, setTypedText] = useState('')
 
-  // Cria o array de itens da galeria dinamicamente
-  const galleryItems = images.map((image: string) => ({
-    type: 'image',
-    src: image,
-    alt: image.split('/').pop()?.split('.')[0] || 'Gallery Image' // Extrai o nome do arquivo como alt
-  }));
+  const galleryItems = [
+    { type: 'image', src: '/placeholder.svg?height=400&width=600', alt: 'Hacker workspace' },
+    { type: 'video', src: 'https://example.com/hacker-video1.mp4' },
+    { type: 'image', src: '/placeholder.svg?height=400&width=600', alt: 'Matrix code' },
+    { type: 'video', src: 'https://example.com/hacker-video2.mp4' },
+    { type: 'image', src: '/placeholder.svg?height=400&width=600', alt: 'Vintage computer' },
+    { type: 'image', src: '/placeholder.svg?height=400&width=600', alt: 'Circuit board' },
+  ]
 
   const nextItem = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % galleryItems.length)
@@ -40,7 +26,7 @@ export function OldschoolHackerGalleryComponent() {
   }
 
   useEffect(() => {
-    const text = "INITIALIZING GALLERY..."
+    const text = "INITIALIZING HACKER GALLERY..."
     let i = 0
     const typingInterval = setInterval(() => {
       if (i < text.length) {
