@@ -1,5 +1,5 @@
-import { OldschoolHackerGalleryComponent } from "@/components/oldschool-hacker-gallery"
+import { RetroMediaGalleryComponent } from "@/components/retro-media-gallery"
 
 export default function Page() {
-  return <OldschoolHackerGalleryComponent />
+  return <RetroMediaGalleryComponent />
 }
