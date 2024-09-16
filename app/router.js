@@ -1,5 +1,4 @@
 import { createRouter } from 'next/server';
-import { MetadataRoute } from 'next/server';
 
 const router = createRouter();
 
@@ -8,7 +7,6 @@ router.push('/api/media', async (req, res) => {
   oauth2Client.setCredentials(tokens);
 
   const folderId = '152XF82cVJbZHXx35nSEOIwrELt4lGqPS';
-  const userId = 'email-of-the-folder-owner@will-be-impersonated.by-svc-acct';
 
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
