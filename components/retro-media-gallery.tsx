@@ -6,12 +6,6 @@
     import { X } from 'lucide-react'
     import { VideoPlayer } from './video-player'
     
-    const mediaItems = [
-      { id: 1, title: 'Hack the Planet', type: 'video', src: '/placeholder.mp4' },
-      { id: 2, title: 'Neural Network', type: 'video', src: '/placeholder.mp4' },
-      { id: 3, title: 'Digital Frontier', type: 'video', src: '/placeholder.mp4' },
-    ]
-    
     const MatrixRain = () => {
       const canvasRef = useRef<HTMLCanvasElement | null>(null)
     
@@ -59,9 +53,45 @@
       return <canvas ref={canvasRef} className="fixed inset-0 z-0" />
     }
     
-    export function RetroMediaGalleryComponent() {
-      const [selectedMedia, setSelectedMedia] = useState<typeof mediaItems[number] | null>(null)
+    interface MediaItem {
+      id: string;
+      title: string;
+      type: 'video' | 'image';
+      src: string;
+      thumbnail: string;
+    }
     
+    export function RetroMediaGalleryComponent() {
+      console.log('Componente RetroMediaGalleryComponent renderizado');
+      const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+      const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+
+      useEffect(() => {
+        const fetchMedia = async () => {
+          try {
+            console.log('Iniciando busca de mídia');
+            const response = await fetch('http://localhost:3001/media');
+            console.log('Resposta recebida:', response);
+            const data = await response.json();
+            console.log('Dados recebidos:', data);
+            const updatedData = data.map((item: MediaItem) => ({
+              ...item,
+              src: `http://localhost:3001/file/${item.id}`,
+              thumbnail: item.type === 'video'
+                ? `http://localhost:3001/thumbnail/${item.id}`
+                : `http://localhost:3001/file/${item.id}`
+            }));
+            setMediaItems(updatedData);
+          } catch (error) {
+            console.error('Erro ao buscar itens de mídia:', error);
+          }
+        };
+
+        fetchMedia();
+      }, []);
+
+      console.log('mediaItems:', mediaItems);
+
       return (
         <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
           <MatrixRain />
@@ -70,7 +100,7 @@
               Pog Gallery
             </h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {mediaItems.map((item) => (
+              {mediaItems.map((item: MediaItem) => (
                 <motion.div
                   key={item.id}
                   className="bg-black border-2 border-green-500 rounded-lg overflow-hidden shadow-lg hover:shadow-green-500/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
@@ -78,10 +108,16 @@
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedMedia(item)}
                 >
-                  <div className="relative">
-                    <img src="/placeholder.svg?height=400&width=600" alt={item.title} className="w-full h-48 object-cover" />
+                  <div className="relative aspect-video">
+                    <img 
+                      src={item.thumbnail} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover"
+                    />
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                      <span className="text-green-500 text-lg font-bold glitch" data-text="Ver vídeo">Ver vídeo</span>
+                      <span className="text-green-500 text-lg font-bold glitch" data-text={item.type === 'video' ? 'Ver vídeo' : 'Ver imagem'}>
+                        {item.type === 'video' ? 'Ver vídeo' : 'Ver imagem'}
+                      </span>
                     </div>
                   </div>
                   <div className="p-4">
@@ -99,7 +135,7 @@
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
               >
-                <div className="w-full max-w-5xl">
+                <div className="w-full max-w-4xl">
                   <div className="flex justify-end mb-2">
                     <button
                       onClick={() => setSelectedMedia(null)}
@@ -109,13 +145,13 @@
                       <X size={24} />
                     </button>
                   </div>
-                  {selectedMedia && (
-                    selectedMedia.type === 'video' ? (
-                      <VideoPlayer src={selectedMedia.src} /> // Verifique se VideoPlayer aceita a prop 'src'
+                  <div className="w-full aspect-video">
+                    {selectedMedia.type === 'video' ? (
+                      <VideoPlayer src={selectedMedia.src} />
                     ) : (
-                      <img src={selectedMedia.src} alt={selectedMedia.title} className="w-full" />
-                    )
-                  )}
+                      <img src={selectedMedia.src} alt={selectedMedia.title} className="w-full h-full object-contain" />
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}
