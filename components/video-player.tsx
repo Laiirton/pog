@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -23,7 +23,7 @@ export function VideoPlayer({ src }: { src: string }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause()
@@ -32,35 +32,37 @@ export function VideoPlayer({ src }: { src: string }) {
       }
       setIsPlaying(!isPlaying)
     }
-  }
+  }, [isPlaying])
 
-  const handleVolumeChange = (newVolume: number[]) => {
+  const handleVolumeChange = useCallback((newVolume: number[]) => {
     if (videoRef.current) {
       videoRef.current.volume = newVolume[0]
       setVolume(newVolume[0])
     }
-  }
+  }, [])
 
-  const toggleVolumeSlider = () => setShowVolumeSlider(!showVolumeSlider)
+  const toggleVolumeSlider = useCallback(() => {
+    setShowVolumeSlider(prev => !prev)
+  }, [])
 
-  const handleProgress = () => {
-    if (videoRef.current) {
-      const progress = (videoRef.current.currentTime / videoRef.current.duration) * 100
-      setProgress(progress)
+  const handleProgress = useCallback(() => {
+    if (videoRef.current && videoRef.current.duration) {
+      const currentProgress = (videoRef.current.currentTime / videoRef.current.duration) * 100
+      setProgress(currentProgress)
     }
-  }
+  }, [])
 
-  const handleSeek = (newProgress: number[]) => {
-    if (videoRef.current) {
+  const handleSeek = useCallback((newProgress: number[]) => {
+    if (videoRef.current && videoRef.current.duration) {
       const time = (newProgress[0] / 100) * videoRef.current.duration
       videoRef.current.currentTime = time
       setProgress(newProgress[0])
     }
-  }
+  }, [])
 
-  const handleFullscreen = () => {
+  const handleFullscreen = useCallback(() => {
     if (videoRef.current) videoRef.current.requestFullscreen()
-  }
+  }, [])
 
   return (
     <div className="w-full h-full bg-black rounded-lg overflow-hidden shadow-lg">
@@ -70,10 +72,17 @@ export function VideoPlayer({ src }: { src: string }) {
           className="w-full h-full object-contain"
           onTimeUpdate={handleProgress}
           src={src}
+          aria-label="Reprodutor de vídeo"
         />
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4">
           <div className="flex items-center space-x-4">
-            <Button size="icon" variant="ghost" onClick={togglePlay} className="text-green-500 hover:bg-green-900 hover:bg-opacity-50">
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              onClick={togglePlay} 
+              className="text-green-500 hover:bg-green-900 hover:bg-opacity-50"
+              aria-label={isPlaying ? "Pausar vídeo" : "Reproduzir vídeo"}
+            >
               {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
             </Button>
             <Slider
@@ -82,6 +91,7 @@ export function VideoPlayer({ src }: { src: string }) {
               max={100}
               step={0.1}
               onValueChange={handleSeek}
+              aria-label="Progresso do vídeo"
             />
             <div className="relative" ref={volumeSliderRef}>
               <Button
@@ -89,6 +99,7 @@ export function VideoPlayer({ src }: { src: string }) {
                 variant="ghost"
                 onClick={toggleVolumeSlider}
                 className="text-green-500 hover:bg-green-900 hover:bg-opacity-50"
+                aria-label={volume === 0 ? "Ativar som" : "Desativar som"}
               >
                 {volume === 0 ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
               </Button>
@@ -108,12 +119,19 @@ export function VideoPlayer({ src }: { src: string }) {
                       max={1}
                       step={0.01}
                       onValueChange={handleVolumeChange}
+                      aria-label="Controle de volume"
                     />
                   </div>
                 </div>
               )}
             </div>
-            <Button size="icon" variant="ghost" onClick={handleFullscreen} className="text-green-500 hover:bg-green-900 hover:bg-opacity-50">
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              onClick={handleFullscreen} 
+              className="text-green-500 hover:bg-green-900 hover:bg-opacity-50"
+              aria-label="Tela cheia"
+            >
               <Maximize className="h-6 w-6" />
             </Button>
           </div>
