@@ -5,7 +5,7 @@ import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 
-export function VideoPlayer({ src }: { src: string }) { // Adicione a prop 'src'
+export function VideoPlayer({ src }: { src: string }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(1)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
@@ -63,16 +63,13 @@ export function VideoPlayer({ src }: { src: string }) { // Adicione a prop 'src'
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-black rounded-lg overflow-hidden shadow-lg">
-      <div className="p-4 bg-green-900 text-green-500">
-        <h2 className="text-2xl font-mono text-center">Hack the Planet</h2>
-      </div>
-      <div className="relative">
+    <div className="w-full h-full bg-black rounded-lg overflow-hidden shadow-lg">
+      <div className="relative w-full h-full">
         <video
           ref={videoRef}
-          className="w-full"
+          className="w-full h-full object-contain"
           onTimeUpdate={handleProgress}
-          src={src} // Use a prop 'src' aqui
+          src={src}
         />
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4">
           <div className="flex items-center space-x-4">
