@@ -1,11 +1,16 @@
     'use client'
     
-    import { useState, useRef, useEffect, useCallback } from 'react'
+    import useSWR from 'swr'
+    import { useState } from 'react'
     import { motion, AnimatePresence } from 'framer-motion'
     import { X } from 'lucide-react'
     import { VideoPlayer } from './video-player'
+    import { useRef, useEffect } from 'react';
     
     const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
+    
+    const fetcher = (url: string) => fetch(url).then(res => res.json())
+
 
     const MatrixRain = () => {
       const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -69,38 +74,22 @@
     }
 
     export function RetroMediaGalleryComponent() {
+      const { data, error, isLoading } = useSWR<MediaItem[]>(`${MEDIA_API_URL}/media`, fetcher, {
+        refreshInterval: 60000, // Atualiza a cada 60 segundos
+      })
+
       const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
-      const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
-      const [loading, setLoading] = useState(true)
-      const [error, setError] = useState<string | null>(null)
 
-      useEffect(() => {
-        const fetchMedia = async () => {
-          try {
-            setLoading(true);
-            const response = await fetch(`${MEDIA_API_URL}/media`);
-            if (!response.ok) throw new Error('Erro ao buscar mídias');
-            const data = await response.json();
-            const updatedData = data.map((item: MediaItem) => ({
-              ...item,
-              src: `${MEDIA_API_URL}/file/${item.id}`,
-              thumbnail: item.type === 'video'
-                ? `${MEDIA_API_URL}/thumbnail/${item.id}`
-                : `${MEDIA_API_URL}/file/${item.id}`
-            }));
-            setMediaItems(updatedData);
-          } catch (error: any) {
-            setError(error.message);
-          } finally {
-            setLoading(false);
-          }
-        };
+      if (isLoading) return <div>Carregando...</div>
+      if (error) return <div>Erro ao carregar mídias.</div>
 
-        fetchMedia();
-      }, []);
-
-      if (loading) return <div>Carregando...</div>;
-      if (error) return <div>{error}</div>;
+      const mediaItems = data?.map(item => ({
+        ...item,
+        src: `${MEDIA_API_URL}/file/${item.id}`,
+        thumbnail: item.type === 'video'
+          ? `${MEDIA_API_URL}/thumbnail/${item.id}`
+          : `${MEDIA_API_URL}/file/${item.id}`
+      })) || []
 
       return (
         <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
