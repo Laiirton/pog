@@ -1,5 +1,9 @@
-import { RetroMediaGalleryComponent } from "@/components/retro-media-gallery"
+import { RetroMediaGalleryComponent } from '../components/retro-media-gallery';
 
-export default function Page() {
-  return <RetroMediaGalleryComponent />
+export default function Home() {
+  return (
+    <main>
+      <RetroMediaGalleryComponent />
+    </main>
+  );
 }
