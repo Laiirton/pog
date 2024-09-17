@@ -219,7 +219,10 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     if (error) {
       console.error('Erro ao salvar no Supabase:', error);
-      throw error;
+      if (error.code === '23502') {
+        return res.status(400).json({ error: 'Dados incompletos. Verifique se todos os campos obrigatórios foram preenchidos.' });
+      }
+      return res.status(500).json({ error: 'Erro ao salvar os dados no banco de dados.' });
     }
 
     // Remover o arquivo temporário, se existir
