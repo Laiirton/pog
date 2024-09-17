@@ -1,12 +1,14 @@
     'use client'
     
     import useSWR from 'swr'
-    import { useState, useCallback, useRef, useEffect } from 'react'
+    import { useState, useCallback } from 'react'
     import { motion, AnimatePresence } from 'framer-motion'
     import { X } from 'lucide-react'
     import { VideoPlayer } from './video-player'
+    import { ImageFrame } from './image-frame'
     import { MediaUpload } from './media-upload'
     import { supabase } from '../lib/supabase'
+    import { MatrixRain } from './matrix-rain'
 
     const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
 
@@ -36,59 +38,6 @@
       return combinedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     }
 
-    const MatrixRain = () => {
-      const canvasRef = useRef<HTMLCanvasElement | null>(null)
-
-      useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
-
-        const drops: number[] = Array(Math.floor(columns)).fill(1);
-
-        const draw = () => {
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          ctx.fillStyle = '#0F0';
-          ctx.font = `${fontSize}px monospace`;
-
-          drops.forEach((drop, i) => {
-            const text = characters[Math.floor(Math.random() * characters.length)];
-            ctx.fillText(text, i * fontSize, drop * fontSize);
-
-            if (drop * fontSize > canvas.height && Math.random() > 0.975) {
-              drops[i] = 0;
-            }
-            drops[i]++;
-          });
-        }
-
-        const interval = setInterval(draw, 33);
-
-        const handleResize = () => {
-          canvas.width = window.innerWidth;
-          canvas.height = window.innerHeight;
-        };
-
-        window.addEventListener('resize', handleResize);
-
-        return () => {
-          clearInterval(interval);
-          window.removeEventListener('resize', handleResize);
-        };
-      }, [])
-
-      return <canvas ref={canvasRef} className="fixed inset-0 z-0" />
-    }
-
     interface MediaItem {
       id: string;
       title: string;
@@ -113,7 +62,7 @@
 
     export function RetroMediaGalleryComponent() {
       const { data, error, isLoading, mutate } = useSWR<MediaItem[]>('media', fetcher, {
-        refreshInterval: 60000, // Atualiza a cada 60 segundos
+        refreshInterval: 60000,
       })
 
       const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
@@ -192,9 +141,14 @@
                   </div>
                   <div className="w-full aspect-video">
                     {selectedMedia.type === 'video' ? (
-                      <VideoPlayer src={selectedMedia.src} />
+                      <VideoPlayer src={selectedMedia.src} title={selectedMedia.title} />
                     ) : (
-                      <img src={selectedMedia.src} alt={selectedMedia.title} className="w-full h-full object-contain" />
+                      <ImageFrame
+                        src={selectedMedia.src}
+                        alt={selectedMedia.title || ''}
+                        username={selectedMedia.username || ''}
+                        createdAt={selectedMedia.created_at || ''}
+                      />
                     )}
                   </div>
                 </div>
