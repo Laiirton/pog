@@ -5,19 +5,30 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const ffmpeg = require('fluent-ffmpeg');
+const multer = require('multer');
+const { Readable } = require('stream'); 
 
 const app = express();
 const port = process.env.PORT || 3001;
+
+// Atualizar os escopos para incluir permissões de escrita
+const SCOPES = [
+  'https://www.googleapis.com/auth/drive.readonly',
+  'https://www.googleapis.com/auth/drive.file'
+];
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 const FOLDER_ID = process.env.FOLDER_ID;
-const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
 app.use(cors());
+
+// Configurar o armazenamento do multer
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 app.get('/auth', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
@@ -106,6 +117,7 @@ app.get('/file/:fileId', async (req, res) => {
   }
 });
 
+// Endpoint para gerar thumbnails
 app.get('/thumbnail/:fileId', async (req, res) => {
   loadTokens();
 
@@ -160,8 +172,40 @@ app.get('/thumbnail/:fileId', async (req, res) => {
   }
 });
 
+// Novo endpoint para upload de arquivos
+app.post('/upload', upload.single('file'), async (req, res) => {
+  loadTokens();
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+  }
+
+  const drive = google.drive({ version: 'v3', auth: oauth2Client });
+  
+  const fileMetadata = {
+    name: req.file.originalname,
+  };
+  
+  const media = {
+    mimeType: req.file.mimetype,
+    body: Readable.from(req.file.buffer), // Converter Buffer para Stream
+  };
+  
+  try {
+    const file = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id',
+    });
+    res.status(200).json({ fileId: file.data.id });
+  } catch (error) {
+    console.error('Erro ao fazer upload do arquivo:', error);
+    res.status(500).json({ error: 'Erro ao fazer upload do arquivo.' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
-  console.log(`Acesse ${port}/auth para autenticar`);
+  console.log(`Acesse http://localhost:${port}/auth para autenticar`);
   loadTokens(); // Carregar tokens ao iniciar o servidor
 });
