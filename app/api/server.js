@@ -222,6 +222,17 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       throw error;
     }
 
+    // Remover o arquivo temporário, se existir
+    if (req.file.path) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.error('Erro ao remover arquivo temporário:', err);
+        } else {
+          console.log('Arquivo temporário removido com sucesso');
+        }
+      });
+    }
+
     res.status(200).json({ fileId: file.data.id, supabaseData: data });
   } catch (error) {
     console.error('Erro ao fazer upload do arquivo:', error);
