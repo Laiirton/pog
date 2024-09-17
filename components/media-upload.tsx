@@ -1,13 +1,19 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Upload, X, FileImage, FileVideo } from 'lucide-react'
+import { useState, useRef, useCallback } from 'react'
+import { Upload, X, FileImage, FileVideo, Loader } from 'lucide-react'
 
-export function MediaUpload() {
+interface MediaUploadProps {
+  onUploadSuccess: () => void;
+}
+
+export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -39,15 +45,39 @@ export function MediaUpload() {
     setFileName('')
   }
 
-  const handleUpload = () => {
+  const handleUpload = useCallback(async () => {
     if (file && fileName) {
-      // Here you would implement the actual file upload logic
-      console.log(`Uploading file: ${fileName}`)
-      // Reset the form after upload
-      setFile(null)
-      setFileName('')
+      setIsUploading(true)
+      setUploadError(null)
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('name', fileName); // Adicione o nome do arquivo
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Falha no upload');
+        }
+
+        const result = await response.json();
+        console.log('Arquivo enviado com sucesso:', result.fileId);
+        
+        setFile(null);
+        setFileName('');
+        onUploadSuccess();
+      } catch (error) {
+        console.error('Erro ao fazer upload:', error);
+        setUploadError(error instanceof Error ? error.message : 'Erro desconhecido no upload');
+      } finally {
+        setIsUploading(false)
+      }
     }
-  }
+  }, [file, fileName, onUploadSuccess])
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -99,11 +129,21 @@ export function MediaUpload() {
             />
             <button
               onClick={handleUpload}
-              className="w-full bg-green-600 hover:bg-green-700 text-black font-bold py-3 px-4 rounded transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!file || !fileName}
+              className="w-full bg-green-600 hover:bg-green-700 text-black font-bold py-3 px-4 rounded transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={!file || !fileName || isUploading}
             >
-              Upload to Pog Gallery
+              {isUploading ? (
+                <>
+                  <Loader className="animate-spin mr-2" size={20} />
+                  Uploading...
+                </>
+              ) : (
+                'Upload to Pog Gallery'
+              )}
             </button>
+            {uploadError && (
+              <p className="text-red-500 text-sm">{uploadError}</p>
+            )}
           </div>
         </div>
       </div>
