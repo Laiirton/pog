@@ -7,6 +7,9 @@ const cors = require('cors');
 const ffmpeg = require('fluent-ffmpeg');
 const multer = require('multer');
 const { Readable } = require('stream'); 
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -183,8 +186,8 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
   
   const fileMetadata = {
-    name: req.body.name || req.file.originalname, // Use o nome fornecido ou o nome original
-    parents: [FOLDER_ID], // Adicione o arquivo à pasta específica
+    name: req.body.name || req.file.originalname,
+    parents: [FOLDER_ID],
   };
   
   const media = {
@@ -198,8 +201,28 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       media: media,
       fields: 'id',
     });
-    console.log('Arquivo enviado com sucesso. ID:', file.data.id);
-    res.status(200).json({ fileId: file.data.id });
+    console.log('Arquivo enviado com sucesso para o Google Drive. ID:', file.data.id);
+
+    // Salvar informações no Supabase
+    const { data, error } = await supabase
+      .from('media')
+      .insert([
+        {
+          title: req.body.name || req.file.originalname,
+          type: req.file.mimetype.startsWith('image/') ? 'image' : 'video',
+          src: `${process.env.MEDIA_URL}/file/${file.data.id}`,
+          thumbnail: req.file.mimetype.startsWith('image/') ? `${process.env.MEDIA_URL}/file/${file.data.id}` : `${process.env.MEDIA_URL}/thumbnail/${file.data.id}`,
+          username: req.body.username
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error('Erro ao salvar no Supabase:', error);
+      throw error;
+    }
+
+    res.status(200).json({ fileId: file.data.id, supabaseData: data });
   } catch (error) {
     console.error('Erro ao fazer upload do arquivo:', error);
     res.status(500).json({ error: 'Erro ao fazer upload do arquivo.' });
