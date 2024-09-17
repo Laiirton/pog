@@ -6,6 +6,7 @@
     import { X } from 'lucide-react'
     import { VideoPlayer } from './video-player'
     import { useRef, useEffect } from 'react';
+    import { MediaUpload } from './media-upload' // Certifique-se de importar o componente MediaUpload
     
     const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
     
@@ -79,6 +80,7 @@
       })
 
       const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
+      const [showUpload, setShowUpload] = useState(false) // Novo estado para controlar a visibilidade do MediaUpload
 
       if (isLoading) return <div>Carregando...</div>
       if (error) return <div>Erro ao carregar mídias.</div>
@@ -98,6 +100,12 @@
             <h1 className="text-5xl mb-12 text-center font-bold glitch" data-text="Pog Gallery">
               Pog Gallery
             </h1>
+            <button
+              onClick={() => setShowUpload(true)}
+              className="absolute top-4 right-4 bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
+            >
+              Upload
+            </button>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {mediaItems.map((item: MediaItem) => (
                 <motion.div
@@ -155,6 +163,18 @@
               </motion.div>
             )}
           </AnimatePresence>
+          {showUpload && (
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+              <MediaUpload />
+              <button
+                onClick={() => setShowUpload(false)}
+                className="absolute top-4 right-4 text-green-500 hover:text-green-300 transition-colors duration-200"
+                aria-label="Fechar"
+              >
+                <X size={24} />
+              </button>
+            </div>
+          )}
         </div>
       )
     }
