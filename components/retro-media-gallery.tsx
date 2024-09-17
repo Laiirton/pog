@@ -7,7 +7,8 @@
     import { VideoPlayer } from './video-player'
     import { useRef, useEffect } from 'react';
     import { MediaUpload } from './media-upload' // Certifique-se de importar o componente MediaUpload
-    
+    import { useCallback } from 'react'
+
     const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
     
     const fetcher = (url: string) => fetch(url).then(res => res.json())
@@ -75,12 +76,17 @@
     }
 
     export function RetroMediaGalleryComponent() {
-      const { data, error, isLoading } = useSWR<MediaItem[]>(`${MEDIA_API_URL}/media`, fetcher, {
+      const { data, error, isLoading, mutate } = useSWR<MediaItem[]>(`${MEDIA_API_URL}/media`, fetcher, {
         refreshInterval: 60000, // Atualiza a cada 60 segundos
       })
 
       const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
       const [showUpload, setShowUpload] = useState(false) // Novo estado para controlar a visibilidade do MediaUpload
+
+      const handleUploadSuccess = useCallback(() => {
+        mutate(); // Isso irá revalidar os dados da galeria
+        setShowUpload(false);
+      }, [mutate]);
 
       if (isLoading) return <div>Carregando...</div>
       if (error) return <div>Erro ao carregar mídias.</div>
@@ -165,7 +171,7 @@
           </AnimatePresence>
           {showUpload && (
             <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-              <MediaUpload />
+              <MediaUpload onUploadSuccess={handleUploadSuccess} />
               <button
                 onClick={() => setShowUpload(false)}
                 className="absolute top-4 right-4 text-green-500 hover:text-green-300 transition-colors duration-200"
