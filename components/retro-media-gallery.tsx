@@ -1,18 +1,40 @@
     'use client'
     
     import useSWR from 'swr'
-    import { useState } from 'react'
+    import { useState, useCallback, useRef, useEffect } from 'react'
     import { motion, AnimatePresence } from 'framer-motion'
     import { X } from 'lucide-react'
     import { VideoPlayer } from './video-player'
-    import { useRef, useEffect } from 'react';
-    import { MediaUpload } from './media-upload' // Certifique-se de importar o componente MediaUpload
-    import { useCallback } from 'react'
+    import { MediaUpload } from './media-upload'
+    import { supabase } from '../lib/supabase'
 
     const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
-    
-    const fetcher = (url: string) => fetch(url).then(res => res.json())
 
+    const fetcher = async () => {
+      const { data: supabaseData, error: supabaseError } = await supabase
+        .from('media')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (supabaseError) throw supabaseError
+
+      // Buscar dados da API do Google Drive
+      const response = await fetch(`${MEDIA_API_URL}/media`)
+      if (!response.ok) {
+        throw new Error('Falha ao buscar dados da API do Google Drive')
+      }
+      const driveData = await response.json()
+
+      // Criar um mapa de itens do Supabase usando o título como chave
+      const supabaseMap = new Map(supabaseData.map(item => [item.title, item]))
+      // Filtrar os itens do Drive que não estão no Supabase (baseado no título)
+      const uniqueDriveData = driveData.filter((item: { title: string }) => !supabaseMap.has(item.title))
+
+      // Combinar dados do Supabase e do Google Drive
+      const combinedData = [...supabaseData, ...uniqueDriveData]
+
+      return combinedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }
 
     const MatrixRain = () => {
       const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -73,31 +95,39 @@
       type: 'video' | 'image';
       src: string;
       thumbnail: string;
+      username?: string;
+      created_at: string;
+    }
+
+    function formatDate(dateString: string) {
+      const date = new Date(dateString);
+      return date.toLocaleString('pt-BR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
     }
 
     export function RetroMediaGalleryComponent() {
-      const { data, error, isLoading, mutate } = useSWR<MediaItem[]>(`${MEDIA_API_URL}/media`, fetcher, {
+      const { data, error, isLoading, mutate } = useSWR<MediaItem[]>('media', fetcher, {
         refreshInterval: 60000, // Atualiza a cada 60 segundos
       })
 
       const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
-      const [showUpload, setShowUpload] = useState(false) // Novo estado para controlar a visibilidade do MediaUpload
+      const [showUpload, setShowUpload] = useState(false)
 
       const handleUploadSuccess = useCallback(() => {
-        mutate(); // Isso irá revalidar os dados da galeria
-        setShowUpload(false);
-      }, [mutate]);
+        mutate()
+        setShowUpload(false)
+      }, [mutate])
 
       if (isLoading) return <div>Carregando...</div>
       if (error) return <div>Erro ao carregar mídias.</div>
 
-      const mediaItems = data?.map(item => ({
-        ...item,
-        src: `${MEDIA_API_URL}/file/${item.id}`,
-        thumbnail: item.type === 'video'
-          ? `${MEDIA_API_URL}/thumbnail/${item.id}`
-          : `${MEDIA_API_URL}/file/${item.id}`
-      })) || []
+      const mediaItems = data || []
 
       return (
         <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
@@ -135,6 +165,8 @@
                   </div>
                   <div className="p-4">
                     <h2 className="text-xl font-bold mb-2 glitch" data-text={item.title}>{item.title}</h2>
+                    {item.username && <p className="text-sm text-green-400">Enviado por: {item.username}</p>}
+                    <p className="text-xs text-green-300 mt-1">Enviado em: {formatDate(item.created_at)}</p>
                   </div>
                 </motion.div>
               ))}
