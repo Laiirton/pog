@@ -183,12 +183,13 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
   
   const fileMetadata = {
-    name: req.file.originalname,
+    name: req.body.name || req.file.originalname, // Use o nome fornecido ou o nome original
+    parents: [FOLDER_ID], // Adicione o arquivo à pasta específica
   };
   
   const media = {
     mimeType: req.file.mimetype,
-    body: Readable.from(req.file.buffer), // Converter Buffer para Stream
+    body: Readable.from(req.file.buffer),
   };
   
   try {
@@ -197,6 +198,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       media: media,
       fields: 'id',
     });
+    console.log('Arquivo enviado com sucesso. ID:', file.data.id);
     res.status(200).json({ fileId: file.data.id });
   } catch (error) {
     console.error('Erro ao fazer upload do arquivo:', error);
