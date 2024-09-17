@@ -74,6 +74,7 @@ export function RetroMediaGalleryComponent() {
 
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<'todos' | 'imagens' | 'videos'>('todos')
 
   const handleUploadSuccess = useCallback(() => {
     mutate()
@@ -85,6 +86,13 @@ export function RetroMediaGalleryComponent() {
 
   const mediaItems = data || []
 
+  const filteredMediaItems = mediaItems.filter(item => {
+    if (activeCategory === 'todos') return true
+    if (activeCategory === 'imagens') return item.type === 'image'
+    if (activeCategory === 'videos') return item.type === 'video'
+    return true
+  })
+
   return (
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
@@ -92,14 +100,17 @@ export function RetroMediaGalleryComponent() {
         <h1 className="text-5xl mb-12 text-center font-bold glitch" data-text="Pog Gallery">
           Pog Gallery
         </h1>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="absolute top-4 right-4 bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
-        >
-          Upload
-        </button>
+        <div className="flex justify-between items-center mb-8">
+          <CategoryButtons activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+          <button
+            onClick={() => setShowUpload(true)}
+            className="bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
+          >
+            Upload
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {mediaItems.map((item: MediaItem) => (
+          {filteredMediaItems.map((item: MediaItem) => (
             <MediaItem key={item.id} item={item} onClick={() => setSelectedMedia(item)} />
           ))}
         </div>
@@ -188,4 +199,25 @@ const UploadModal = ({ showUpload, onUploadSuccess, onClose }: { showUpload: boo
       </button>
     </div>
   )
+)
+
+const CategoryButtons = ({ activeCategory, setActiveCategory }: { 
+  activeCategory: 'todos' | 'imagens' | 'videos', 
+  setActiveCategory: (category: 'todos' | 'imagens' | 'videos') => void 
+}) => (
+  <div className="flex space-x-4">
+    {['todos', 'imagens', 'videos'].map((category) => (
+      <button
+        key={category}
+        onClick={() => setActiveCategory(category as 'todos' | 'imagens' | 'videos')}
+        className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+          activeCategory === category
+            ? 'bg-green-500 text-black shadow-lg shadow-green-500/50'
+            : 'bg-black text-green-500 border border-green-500 hover:bg-green-500 hover:text-black'
+        }`}
+      >
+        {category.charAt(0).toUpperCase() + category.slice(1)}
+      </button>
+    ))}
+  </div>
 )
