@@ -10,6 +10,7 @@ interface MediaUploadProps {
 export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
+  const [username, setUsername] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -46,38 +47,41 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   }
 
   const handleUpload = useCallback(async () => {
-    if (file && fileName) {
+    if (file && fileName && username) {
       setIsUploading(true)
       setUploadError(null)
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('name', fileName); // Adicione o nome do arquivo
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('name', fileName)
+      formData.append('username', username)
 
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/upload`, {
           method: 'POST',
           body: formData,
-        });
+        })
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Falha no upload');
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Falha no upload')
         }
 
-        const result = await response.json();
-        console.log('Arquivo enviado com sucesso:', result.fileId);
+        const result = await response.json()
+        console.log('Arquivo enviado com sucesso:', result)
         
-        setFile(null);
-        setFileName('');
-        onUploadSuccess();
+        setFile(null)
+        setFileName('')
+        setUsername('')
+        onUploadSuccess()
       } catch (error) {
-        console.error('Erro ao fazer upload:', error);
-        setUploadError(error instanceof Error ? error.message : 'Erro desconhecido no upload');
+        console.error('Erro ao fazer upload:', error)
+        setUploadError(error instanceof Error ? error.message : 'Erro desconhecido no upload')
       } finally {
         setIsUploading(false)
       }
     }
-  }, [file, fileName, onUploadSuccess])
+  }, [file, fileName, username, onUploadSuccess])
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -108,7 +112,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
             ) : (
               <div className="space-y-4">
                 <Upload className="mx-auto text-green-500" size={48} />
-                <p className="text-green-500">Drag and drop your media file here, or click to select</p>
+                <p className="text-green-500">Arraste e solte seu arquivo de mídia aqui, ou clique para selecionar</p>
               </div>
             )}
             <input
@@ -124,21 +128,28 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
               type="text"
               value={fileName}
               onChange={(e) => setFileName(e.target.value)}
-              placeholder="Enter desired file name"
+              placeholder="Digite o nome desejado para o arquivo"
+              className="w-full p-2 bg-black bg-opacity-50 border border-green-500 rounded text-green-400 placeholder-green-600"
+            />
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Digite seu nome de usuário"
               className="w-full p-2 bg-black bg-opacity-50 border border-green-500 rounded text-green-400 placeholder-green-600"
             />
             <button
               onClick={handleUpload}
               className="w-full bg-green-600 hover:bg-green-700 text-black font-bold py-3 px-4 rounded transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              disabled={!file || !fileName || isUploading}
+              disabled={!file || !fileName || !username || isUploading}
             >
               {isUploading ? (
                 <>
                   <Loader className="animate-spin mr-2" size={20} />
-                  Uploading...
+                  Enviando...
                 </>
               ) : (
-                'Upload to Pog Gallery'
+                'Enviar para Pog Gallery'
               )}
             </button>
             {uploadError && (
