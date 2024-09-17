@@ -34,6 +34,7 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [showControls, setShowControls] = useState(false)
+  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
   const videoRef = useRef<HTMLVideoElement>(null)
   const volumeSliderRef = useRef<HTMLDivElement>(null)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -75,7 +76,7 @@ export function VideoPlayer({
       setProgress(newProgress[0])
       setCurrentTime(time)
     }
-  }, [videoRef, videoRef.current?.duration])
+  }, [])
 
   const handleFullscreen = useCallback(() => {
     if (videoRef.current) {
@@ -123,35 +124,36 @@ export function VideoPlayer({
       window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Erro ao baixar o vídeo:', error)
-      // Aqui você pode adicionar uma notificação para o usuário sobre o erro
     }
   }, [src, title])
+
+  const handleLoadedMetadata = useCallback(() => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration)
+      setIsLoading(false)
+      setVideoDimensions({
+        width: videoRef.current.videoWidth,
+        height: videoRef.current.videoHeight
+      })
+    }
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
-    const handleLoadedMetadata = () => {
-      setDuration(video.duration)
-      setIsLoading(false)
-    }
-
-    const handlePlay = () => setIsPlaying(true)
-    const handlePause = () => setIsPlaying(false)
-    const handleVolumeChange = () => setVolume(video.volume)
-
     video.addEventListener('loadedmetadata', handleLoadedMetadata)
-    video.addEventListener('play', handlePlay)
-    video.addEventListener('pause', handlePause)
-    video.addEventListener('volumechange', handleVolumeChange)
+    video.addEventListener('play', () => setIsPlaying(true))
+    video.addEventListener('pause', () => setIsPlaying(false))
+    video.addEventListener('volumechange', () => setVolume(video.volume))
 
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata)
-      video.removeEventListener('play', handlePlay)
-      video.removeEventListener('pause', handlePause)
-      video.removeEventListener('volumechange', handleVolumeChange)
+      video.removeEventListener('play', () => setIsPlaying(true))
+      video.removeEventListener('pause', () => setIsPlaying(false))
+      video.removeEventListener('volumechange', () => setVolume(video.volume))
     }
-  }, [])
+  }, [handleLoadedMetadata])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -175,14 +177,16 @@ export function VideoPlayer({
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[var(--primary-color)]"></div>
         </div>
       )}
-      <video
-        ref={videoRef}
-        className="w-full h-full object-cover"
-        onTimeUpdate={handleProgress}
-        src={src}
-        aria-label="Video player"
-        onClick={togglePlay}
-      />
+      <div className="aspect-video max-h-[80vh] flex items-center justify-center">
+        <video
+          ref={videoRef}
+          className="w-full h-full object-contain"
+          onTimeUpdate={handleProgress}
+          src={src}
+          aria-label="Video player"
+          onClick={togglePlay}
+        />
+      </div>
       <div className={`absolute inset-0 bg-gradient-to-t from-black to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4">
           <div className="flex flex-col space-y-2">
