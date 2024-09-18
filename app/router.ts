@@ -1,13 +1,11 @@
-import { createRouter } from 'next/server';
-import { MetadataRoute } from 'next/server';
 import { google } from 'googleapis';
 import fs from 'fs';
+import { NextApiRequest, NextApiResponse } from 'next';
 
-const router = createRouter();
-
-// ... (código da rota /api/media) ...
-
-export default router;
-export const metadata: MetadataRoute = {
-  runtime: 'edge',
+// Função de exemplo para lidar com a rota
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  // ... (código da rota /api/media) ...
+  res.status(200).json({ message: 'Rota funcionando' });
 };
+
+export default handler;
