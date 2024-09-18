@@ -49,6 +49,9 @@ export function Register({ onRegistrationComplete }: RegisterProps) {
         console.log('New user registered:', newUser)
       }
 
+      // Store username in localStorage
+      localStorage.setItem('username', username)
+
       // Call the onRegistrationComplete callback
       onRegistrationComplete()
     } catch (error: any) {
