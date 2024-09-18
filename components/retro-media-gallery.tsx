@@ -104,31 +104,12 @@ export function RetroMediaGalleryComponent() {
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
       <div className="relative z-10 p-8">
-        {/* Texto do criador atualizado com animação de troca */}
-        <motion.div 
-          className="absolute top-4 right-4 text-green-500 text-lg font-bold p-2 border-2 border-green-500 rounded-lg overflow-hidden"
-          initial={{ opacity: 0, y: -20, rotateX: 90 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          whileHover={{ scale: 1.05, boxShadow: "0 0 8px #00FF00" }}
+        {/* Texto do criador simplificado */}
+        <div 
+          className="absolute top-4 right-4 text-green-500 text-lg font-bold p-2 border-2 border-green-500 rounded-lg"
         >
-          <motion.div
-            className="relative"
-            initial={{ height: "auto" }}
-            whileHover={{ height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            Criado por Anjinho Ruindade Pura 😈
-          </motion.div>
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            Criado por Lairton
-          </motion.div>
-        </motion.div>
+          Criado por Anjinho Ruindade Pura 😈
+        </div>
         
         {/* Updated title with animation */}
         <motion.h1 
