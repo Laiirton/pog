@@ -12,8 +12,8 @@ export default function Home() {
   useEffect(() => {
     const checkUser = async () => {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
         setShowRegister(false);
       }
       setIsLoading(false);
