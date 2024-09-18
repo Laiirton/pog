@@ -10,7 +10,6 @@ interface MediaUploadProps {
 export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
-  const [username, setUsername] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -47,14 +46,19 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   }
 
   const handleUpload = useCallback(async () => {
-    if (file && fileName && username) {
+    if (file && fileName) {
       setIsUploading(true)
       setUploadError(null)
 
       const formData = new FormData()
       formData.append('file', file)
       formData.append('name', fileName)
-      formData.append('username', username)
+
+      // Get username from localStorage
+      const username = localStorage.getItem('username')
+      if (username) {
+        formData.append('username', username)
+      }
 
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/upload`, {
@@ -72,7 +76,6 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
         
         setFile(null)
         setFileName('')
-        setUsername('')
         onUploadSuccess()
       } catch (error) {
         console.error('Erro ao fazer upload:', error)
@@ -81,7 +84,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
         setIsUploading(false)
       }
     }
-  }, [file, fileName, username, onUploadSuccess])
+  }, [file, fileName, onUploadSuccess])
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -131,17 +134,10 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
               placeholder="Digite o nome desejado para o arquivo"
               className="w-full p-2 bg-black bg-opacity-50 border border-green-500 rounded text-green-400 placeholder-green-600"
             />
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Digite seu nome de usuário"
-              className="w-full p-2 bg-black bg-opacity-50 border border-green-500 rounded text-green-400 placeholder-green-600"
-            />
             <button
               onClick={handleUpload}
               className="w-full bg-green-600 hover:bg-green-700 text-black font-bold py-3 px-4 rounded transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              disabled={!file || !fileName || !username || isUploading}
+              disabled={!file || !fileName || isUploading}
             >
               {isUploading ? (
                 <>
