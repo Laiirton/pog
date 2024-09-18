@@ -12,7 +12,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 30010;
 
 // Atualizar os escopos para incluir permissões de escrita
 const SCOPES = [
