@@ -3,12 +3,13 @@
 import useSWR from 'swr'
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, LogOut } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
 import { supabase } from '../lib/supabase'
 import { MatrixRain } from './matrix-rain'
+import { useRouter } from 'next/navigation'
 
 const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
 
@@ -75,11 +76,17 @@ export function RetroMediaGalleryComponent() {
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
   const [activeCategory, setActiveCategory] = useState<'todos' | 'imagens' | 'videos'>('todos')
+  const router = useRouter()
 
   const handleUploadSuccess = useCallback(() => {
     mutate()
     setShowUpload(false)
   }, [mutate])
+
+  const handleLogout = () => {
+    localStorage.removeItem('username')
+    router.push('/')
+  }
 
   if (isLoading) return <div>Carregando...</div>
   if (error) return <div>Erro ao carregar mídias.</div>
@@ -97,17 +104,76 @@ export function RetroMediaGalleryComponent() {
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
       <div className="relative z-10 p-8">
-        <h1 className="text-5xl mb-12 text-center font-bold glitch" data-text="Pog Gallery">
-          Pog Gallery
-        </h1>
+        {/* Texto do criador atualizado com animação de troca */}
+        <motion.div 
+          className="absolute top-4 right-4 text-green-500 text-lg font-bold p-2 border-2 border-green-500 rounded-lg overflow-hidden"
+          initial={{ opacity: 0, y: -20, rotateX: 90 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          whileHover={{ scale: 1.05, boxShadow: "0 0 8px #00FF00" }}
+        >
+          <motion.div
+            className="relative"
+            initial={{ height: "auto" }}
+            whileHover={{ height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            Criado por Anjinho Ruindade Pura 😈
+          </motion.div>
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            Criado por Lairton
+          </motion.div>
+        </motion.div>
+        
+        {/* Updated title with animation */}
+        <motion.h1 
+          className="text-6xl font-bold mb-8 text-center relative"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+        >
+          <motion.span
+            className="inline-block"
+            animate={{ 
+              color: ["#00FF00", "#FFFFFF", "#00FF00"],
+              textShadow: [
+                "0 0 5px #00FF00, 0 0 10px #00FF00",
+                "0 0 5px #FFFFFF, 0 0 10px #FFFFFF",
+                "0 0 5px #00FF00, 0 0 10px #00FF00"
+              ]
+            }}
+            transition={{ 
+              repeat: Infinity, 
+              duration: 2, 
+              ease: "easeInOut" 
+            }}
+          >
+            Pog Gallery
+          </motion.span>
+        </motion.h1>
+
         <div className="flex justify-between items-center mb-8">
           <CategoryButtons activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
-          <button
-            onClick={() => setShowUpload(true)}
-            className="bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
-          >
-            Upload
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setShowUpload(true)}
+              className="bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
+            >
+              Upload
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300 flex items-center"
+            >
+              <LogOut size={20} className="mr-2" />
+              Logout
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredMediaItems.map((item: MediaItem) => (
