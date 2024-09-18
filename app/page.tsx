@@ -3,6 +3,7 @@
 import { RetroMediaGalleryComponent } from '../components/retro-media-gallery';
 import { Register } from '../components/register';
 import { useState, useEffect } from 'react';
+import { LoadingAnimation } from '../components/retro-media-gallery'; // Importe o LoadingAnimation
 
 export default function Home() {
   const [showRegister, setShowRegister] = useState(true);
@@ -29,7 +30,7 @@ export default function Home() {
   };
 
   if (isLoading) {
-    return <div className="text-green-500 text-center">Carregando...</div>;
+    return <LoadingAnimation />; // Use o LoadingAnimation aqui
   }
 
   return (
