@@ -1,7 +1,7 @@
 'use client'
     
 import useSWR from 'swr'
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, LogOut, Trash2, Upload, User } from 'lucide-react'
 import { VideoPlayer } from './video-player'
@@ -49,9 +49,7 @@ interface RetroMediaGalleryComponentProps {
 }
 
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
-  const { data, error, isLoading, mutate } = useSWR<MediaItem[]>('media', fetcher, {
-    refreshInterval: 60000,
-  })
+  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('media', fetcher);
 
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
@@ -66,17 +64,18 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 
   const [selectedType, setSelectedType] = useState('all')
   const [selectedUser, setSelectedUser] = useState('')
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState<Date>()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [startDate, setStartDate] = useState<Date | null>(null)
+  const [endDate, setEndDate] = useState<Date | null>(null)
 
   const [allUsers, setAllUsers] = useState<string[]>([])
 
   useEffect(() => {
-    if (data) {
-      const users = Array.from(new Set(data.map((item: MediaItem) => item.username).filter(Boolean) as string[]));
+    if (mediaItems) {
+      const users = Array.from(new Set(mediaItems.map((item: MediaItem) => item.username).filter(Boolean) as string[]));
       setAllUsers(users);
     }
-  }, [data]);
+  }, [mediaItems]);
 
   const handleUploadSuccess = useCallback(() => {
     mutate()
@@ -164,18 +163,18 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [])
 
-  if (isLoading) return <LoadingAnimation />;
   if (error) return <div>Error loading media: {error.message}</div>
 
-  const mediaItems = data || []
-
-  const filteredMediaItems = mediaItems.filter((item: MediaItem) => {
-    if (selectedType !== 'all' && item.type !== selectedType) return false
-    if (selectedUser && item.username !== selectedUser) return false
-    if (title && !item.title.toLowerCase().includes(title.toLowerCase())) return false
-    if (date && new Date(item.created_at).toDateString() !== date.toDateString()) return false
-    return true
-  })
+  const filteredMediaItems = useMemo(() => {
+    if (!mediaItems) return [];
+    return mediaItems.filter(item => 
+      (selectedType === 'all' || item.type === selectedType) &&
+      (!selectedUser || item.username === selectedUser) &&
+      (!searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (!startDate || new Date(item.created_at) >= startDate) &&
+      (!endDate || new Date(item.created_at) <= endDate)
+    );
+  }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, endDate]);
 
   return (
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
@@ -246,23 +245,29 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                 setSelectedType={setSelectedType}
                 selectedUser={selectedUser}
                 setSelectedUser={setSelectedUser}
-                title={title}
-                setTitle={setTitle}
-                date={date}
-                setDate={setDate}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                startDate={startDate}
+                setStartDate={setStartDate}
+                endDate={endDate}
+                setEndDate={setEndDate}
                 allUsers={allUsers}
               />
             </div>
             
             <div className="mt-8">
-              <MediaGrid 
-                filteredMediaItems={filteredMediaItems} 
-                setSelectedMedia={setSelectedMedia} 
-                handleDeleteMedia={handleDeleteMedia}
-                isAdmin={isAdmin}
-                observerRef={observerRef}
-                loadedThumbnails={loadedThumbnails}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+                {filteredMediaItems.map((item: MediaItem) => (
+                  <MediaItem 
+                    key={item.id} 
+                    item={item} 
+                    onClick={() => setSelectedMedia(item)} 
+                    onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
+                    observerRef={observerRef}
+                    isLoaded={loadedThumbnails.has(item.thumbnail)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </main>
@@ -287,37 +292,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       {showAdminLogin && (
         <AdminLogin onLogin={handleAdminLogin} onClose={() => setShowAdminLogin(false)} />
       )}
-    </div>
-  )
-}
-
-function MediaGrid({ 
-  filteredMediaItems, 
-  setSelectedMedia, 
-  handleDeleteMedia, 
-  isAdmin, 
-  observerRef, 
-  loadedThumbnails 
-}: {
-  filteredMediaItems: MediaItem[];
-  setSelectedMedia: (item: MediaItem) => void;
-  handleDeleteMedia: (id: string) => void;
-  isAdmin: boolean;
-  observerRef: React.RefObject<IntersectionObserver>;
-  loadedThumbnails: Set<string>;
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {filteredMediaItems.map((item: MediaItem) => (
-        <MediaItem 
-          key={item.id} 
-          item={item} 
-          onClick={() => setSelectedMedia(item)} 
-          onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
-          observerRef={observerRef}
-          isLoaded={loadedThumbnails.has(item.thumbnail)}
-        />
-      ))}
     </div>
   )
 }
