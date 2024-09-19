@@ -34,7 +34,11 @@ oauth2Client.setCredentials({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // Ajuste conforme necessário
+  methods: ['GET', 'POST', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(bodyParser.json());
 
 // Rotas
@@ -52,6 +56,8 @@ app.get('/api/media', async (req, res) => {
 app.post('/api/upload', multer().single('file'), async (req, res) => {
   console.log('POST /api/upload called');
   try {
+    console.log('File:', req.file);
+    console.log('Body:', req.body);
     // Implementação da rota de upload
     res.status(200).json({ message: 'File uploaded successfully' });
   } catch (error) {
