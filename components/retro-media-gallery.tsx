@@ -48,14 +48,6 @@ interface RetroMediaGalleryComponentProps {
   onLogout: () => void;
 }
 
-const getImageSrc = (src: string) => {
-  if (src.includes('drive.google.com')) {
-    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1];
-    return fileId ? `/api/file/${fileId}` : src;
-  }
-  return src;
-};
-
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
   const { data, error, isLoading, mutate } = useSWR<MediaItem[]>('media', fetcher, {
     refreshInterval: 60000,
@@ -185,11 +177,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     return true
   })
 
-  const preloadImage = (src: string) => {
-    const img = new window.Image();
-    img.src = getImageSrc(src);
-  };
-
   return (
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
@@ -275,7 +262,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                 isAdmin={isAdmin}
                 observerRef={observerRef}
                 loadedThumbnails={loadedThumbnails}
-                preloadImage={preloadImage}
               />
             </div>
           </div>
@@ -311,8 +297,7 @@ function MediaGrid({
   handleDeleteMedia, 
   isAdmin, 
   observerRef, 
-  loadedThumbnails,
-  preloadImage
+  loadedThumbnails 
 }: {
   filteredMediaItems: MediaItem[];
   setSelectedMedia: (item: MediaItem) => void;
@@ -320,7 +305,6 @@ function MediaGrid({
   isAdmin: boolean;
   observerRef: React.RefObject<IntersectionObserver>;
   loadedThumbnails: Set<string>;
-  preloadImage: (src: string) => void;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -332,20 +316,18 @@ function MediaGrid({
           onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
           observerRef={observerRef}
           isLoaded={loadedThumbnails.has(item.thumbnail)}
-          onMouseEnter={() => preloadImage(item.src)}
         />
       ))}
     </div>
   )
 }
 
-const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded, onMouseEnter }: { 
+const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void;
   observerRef: React.RefObject<IntersectionObserver>;
   isLoaded: boolean;
-  onMouseEnter: () => void;
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -356,7 +338,6 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded, onMouseEnte
       whileHover={{ scale: 1.05, borderColor: '#00FF00' }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      onMouseEnter={onMouseEnter}
     >
       <div className="relative aspect-video">
         {!imageError ? (
@@ -409,6 +390,14 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded, onMouseEnte
 }
 
 const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaItem | null; onClose: () => void }) => {
+  const getImageSrc = (src: string) => {
+    if (src.includes('drive.google.com')) {
+      const fileId = src.match(/\/d\/(.+?)\/view/)?.[1];
+      return fileId ? `/api/file/${fileId}` : src;
+    }
+    return src;
+  };
+
   return (
     <AnimatePresence>
       {selectedMedia && (
@@ -430,14 +419,17 @@ const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaIt
               {selectedMedia.type === 'video' ? (
                 <VideoPlayer src={getImageSrc(selectedMedia.src)} title={selectedMedia.title} />
               ) : (
-                <ImageFrame
-                  src={getImageSrc(selectedMedia.src)}
-                  alt={selectedMedia.title || ''}
-                  username={selectedMedia.username}
-                  createdAt={selectedMedia.created_at}
-                  className="w-full h-full object-contain"
-                  placeholder={selectedMedia.thumbnail}
-                />
+                <div className="relative w-full h-full">
+                  <img
+                    src={getImageSrc(selectedMedia.src)}
+                    alt={selectedMedia.title || ''}
+                    className="w-full h-full object-contain"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-green-500 p-2">
+                    <p>Uploaded by: {selectedMedia.username || 'Unknown'}</p>
+                    <p>Uploaded on: {formatDate(selectedMedia.created_at)}</p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
