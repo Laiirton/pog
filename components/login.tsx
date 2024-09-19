@@ -30,7 +30,7 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/login`, {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
