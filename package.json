@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "server": "node app/api/server.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "server": "node app/api/server.js"
   },
   "dependencies": {
     "@localnerve/google-drive-folder": "^7.9.0",
