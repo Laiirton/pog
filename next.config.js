@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'pog-five.vercel.app', 'tycfnjqspnvgyhjsjvfs.supabase.co'],
+    domains: ['localhost', 'pog-five.vercel.app', 'tycfnjqspnvgyhjsjvfs.supabase.co', 'pog-git-master-lairtons-projects.vercel.app'],
   },
   eslint: {
     ignoreDuringBuilds: true,
