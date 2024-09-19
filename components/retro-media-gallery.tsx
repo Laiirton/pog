@@ -15,15 +15,19 @@ import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 
-const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || '/api';
+const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'https://pog-five.vercel.app/api';
 
-// Move fetcher function outside of the component
 const fetcher = async () => {
-  const response = await fetch(`${MEDIA_API_URL}/media`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch media');
+  try {
+    const response = await fetch(`${MEDIA_API_URL}/media`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching media:', error);
+    throw error;
   }
-  return response.json();
 }
 
 interface MediaItem {
@@ -36,7 +40,6 @@ interface MediaItem {
   created_at: string;
 }
 
-// Move formatDate function outside of the component
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleString('en-US', {
@@ -170,7 +173,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   }, [])
 
   if (isLoading) return <LoadingAnimation />;
-  if (error) return <div>Error loading media.</div>
+  if (error) return <div>Error loading media: {error.message}</div>
 
   const mediaItems = data || []
 
@@ -327,7 +330,6 @@ function MediaGrid({
   )
 }
 
-// Update MediaItem component to use lazy loading and caching
 const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: { 
   item: MediaItem; 
   onClick: () => void; 
