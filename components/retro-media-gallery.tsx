@@ -216,7 +216,17 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   )
 }
 
-function Header({ onLogout, setShowUpload, setShowAdminLogin, isAdmin }) {
+function Header({ 
+  onLogout,
+  setShowUpload,
+  setShowAdminLogin,
+  isAdmin
+}: {
+  onLogout: () => void;
+  setShowUpload: (show: boolean) => void;
+  setShowAdminLogin: (show: boolean) => void;
+  isAdmin: boolean;
+}) {
   return (
     <div className="mb-8">
       <motion.h1 
@@ -272,7 +282,21 @@ function Header({ onLogout, setShowUpload, setShowAdminLogin, isAdmin }) {
   )
 }
 
-function MediaGrid({ filteredMediaItems, setSelectedMedia, handleDeleteMedia, isAdmin, observerRef, loadedThumbnails }) {
+function MediaGrid({ 
+  filteredMediaItems, 
+  setSelectedMedia, 
+  handleDeleteMedia, 
+  isAdmin, 
+  observerRef, 
+  loadedThumbnails 
+}: {
+  filteredMediaItems: MediaItem[];
+  setSelectedMedia: (item: MediaItem) => void;
+  handleDeleteMedia: (id: string) => void;
+  isAdmin: boolean;
+  observerRef: React.RefObject<IntersectionObserver>;
+  loadedThumbnails: Set<string>;
+}) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {filteredMediaItems.map((item: MediaItem) => (
