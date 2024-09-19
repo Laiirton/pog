@@ -39,15 +39,36 @@ app.use(bodyParser.json());
 
 // Rotas
 app.get('/api/media', async (req, res) => {
-  // Implementação da rota para buscar mídia
+  console.log('GET /api/media called');
+  try {
+    // Implementação da rota para buscar mídia
+    res.status(200).json({ message: 'Media fetched successfully' });
+  } catch (error) {
+    console.error('Error fetching media:', error);
+    res.status(500).json({ error: 'Error fetching media' });
+  }
 });
 
 app.post('/api/upload', multer().single('file'), async (req, res) => {
-  // Implementação da rota de upload
+  console.log('POST /api/upload called');
+  try {
+    // Implementação da rota de upload
+    res.status(200).json({ message: 'File uploaded successfully' });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ error: 'Error uploading file' });
+  }
 });
 
 app.delete('/api/delete-media/:id', async (req, res) => {
-  // Implementação da rota de deleção
+  console.log('DELETE /api/delete-media/:id called');
+  try {
+    // Implementação da rota de deleção
+    res.status(200).json({ message: 'Media deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting media:', error);
+    res.status(500).json({ error: 'Error deleting media' });
+  }
 });
 
 // Outras rotas...
