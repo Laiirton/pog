@@ -90,3 +90,65 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Estilos existentes */
+
+/* Estilização da barra de rolagem */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+  border-left: 1px solid #00ff00;
+  box-shadow: inset 0 0 6px rgba(0, 255, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #00ff00, #008000);
+  border: 2px solid #000000;
+  border-radius: 6px;
+  box-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #00ff00, #006600);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+}
+
+::-webkit-scrollbar-corner {
+  background: #000000;
+}
+
+/* Para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #00ff00 #000000;
+}
+
+/* Classe personalizada para a barra de rolagem */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #000000;
+  border-left: 1px solid #00ff00;
+  box-shadow: inset 0 0 6px rgba(0, 255, 0, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #00ff00, #008000);
+  border: 2px solid #000000;
+  border-radius: 6px;
+  box-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #00ff00, #006600);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: #000000;
+}
