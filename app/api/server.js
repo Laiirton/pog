@@ -10,6 +10,7 @@ const { Readable } = require('stream');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -301,6 +302,79 @@ app.delete('/delete-media/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting media:', error);
     res.status(500).json({ error: `Failed to delete media: ${error.message}` });
+  }
+});
+
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  try {
+    // Verificar se o usuário já existe
+    const { data: existingUser } = await supabase
+      .from('usernames')
+      .select()
+      .eq('username', username)
+      .single();
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // Criptografar a senha
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Inserir novo usuário com a senha criptografada
+    const { data: newUser, error } = await supabase
+      .from('usernames')
+      .insert({ username, password: hashedPassword })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(201).json({ message: 'User registered successfully', user: { username: newUser.username } });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ error: 'An error occurred while registering the user' });
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  try {
+    const { data: user, error } = await supabase
+      .from('usernames')
+      .select()
+      .eq('username', username)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verificar a senha criptografada
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    res.json({ message: 'Login successful', user: { username: user.username } });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).json({ error: 'An error occurred while logging in' });
   }
 });
 
