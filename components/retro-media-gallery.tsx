@@ -3,7 +3,7 @@
 import useSWR from 'swr'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LogOut, Trash2 } from 'lucide-react'
+import { X, LogOut, Trash2, Upload } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
@@ -192,77 +192,19 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
       <div className="relative z-10 p-8">
-        {/* Simplified creator text */}
-        <div 
-          className="absolute top-4 right-4 text-green-500 text-lg font-bold p-2 border-2 border-green-500 rounded-lg"
-        >
-          Created by Anjinho Ruindade Pura 😈
-        </div>
+        <Header onLogout={onLogout} setShowUpload={setShowUpload} setShowAdminLogin={setShowAdminLogin} isAdmin={isAdmin} />
         
-        {/* Updated title with animation */}
-        <motion.h1 
-          className="text-6xl font-bold mb-8 text-center relative"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-        >
-          <motion.span
-            className="inline-block"
-            animate={{ 
-              color: ["#00FF00", "#FFFFFF", "#00FF00"],
-              textShadow: [
-                "0 0 5px #00FF00, 0 0 10px #00FF00",
-                "0 0 5px #FFFFFF, 0 0 10px #FFFFFF",
-                "0 0 5px #00FF00, 0 0 10px #00FF00"
-              ]
-            }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 2, 
-              ease: "easeInOut" 
-            }}
-          >
-            Pog Gallery
-          </motion.span>
-        </motion.h1>
-
-        <div className="flex justify-between items-center mb-8">
-          <CategoryButtons activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setShowUpload(true)}
-              className="bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
-            >
-              Upload
-            </button>
-            {!isAdmin && (
-              <button
-                onClick={() => setShowAdminLogin(true)}
-                className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
-              >
-                Admin Login
-              </button>
-            )}
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300 flex items-center"
-            >
-              <LogOut size={20} className="mr-2" />
-              Logout
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredMediaItems.map((item: MediaItem) => (
-            <MediaItem 
-              key={item.id} 
-              item={item} 
-              onClick={() => setSelectedMedia(item)} 
-              onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
-              observerRef={observerRef}
-              isLoaded={loadedThumbnails.has(item.thumbnail)}
-            />
-          ))}
+        <CategoryButtons activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+        
+        <div className="mt-8">
+          <MediaGrid 
+            filteredMediaItems={filteredMediaItems} 
+            setSelectedMedia={setSelectedMedia} 
+            handleDeleteMedia={handleDeleteMedia}
+            isAdmin={isAdmin}
+            observerRef={observerRef}
+            loadedThumbnails={loadedThumbnails}
+          />
         </div>
       </div>
       <SelectedMediaModal selectedMedia={selectedMedia} onClose={() => setSelectedMedia(null)} />
@@ -270,6 +212,79 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       {showAdminLogin && (
         <AdminLogin onLogin={handleAdminLogin} onClose={() => setShowAdminLogin(false)} />
       )}
+    </div>
+  )
+}
+
+function Header({ onLogout, setShowUpload, setShowAdminLogin, isAdmin }) {
+  return (
+    <div className="mb-8">
+      <motion.h1 
+        className="text-6xl font-bold mb-4 text-center relative"
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+      >
+        <motion.span
+          className="inline-block"
+          animate={{ 
+            color: ["#00FF00", "#FFFFFF", "#00FF00"],
+            textShadow: [
+              "0 0 5px #00FF00, 0 0 10px #00FF00",
+              "0 0 5px #FFFFFF, 0 0 10px #FFFFFF",
+              "0 0 5px #00FF00, 0 0 10px #00FF00"
+            ]
+          }}
+          transition={{ 
+            repeat: Infinity, 
+            duration: 5, 
+            ease: "easeInOut" 
+          }}
+        >
+          Pog Gallery
+        </motion.span>
+      </motion.h1>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={() => setShowUpload(true)}
+          className="bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300 flex items-center"
+        >
+          <Upload size={20} className="mr-2" />
+          Upload
+        </button>
+        {!isAdmin && (
+          <button
+            onClick={() => setShowAdminLogin(true)}
+            className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
+          >
+            Admin Login
+          </button>
+        )}
+        <button
+          onClick={onLogout}
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300 flex items-center"
+        >
+          <LogOut size={20} className="mr-2" />
+          Logout
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function MediaGrid({ filteredMediaItems, setSelectedMedia, handleDeleteMedia, isAdmin, observerRef, loadedThumbnails }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {filteredMediaItems.map((item: MediaItem) => (
+        <MediaItem 
+          key={item.id} 
+          item={item} 
+          onClick={() => setSelectedMedia(item)} 
+          onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
+          observerRef={observerRef}
+          isLoaded={loadedThumbnails.has(item.thumbnail)}
+        />
+      ))}
     </div>
   )
 }
