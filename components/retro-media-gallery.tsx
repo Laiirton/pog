@@ -265,7 +265,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
           </div>
         </header>
 
-        <main className="flex-grow overflow-auto p-8">
+        <main className="flex-grow overflow-auto p-8 custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-4">Filters</h2>
