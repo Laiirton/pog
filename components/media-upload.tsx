@@ -54,7 +54,6 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       formData.append('file', file)
       formData.append('name', fileName)
 
-      // Get username from localStorage
       const username = localStorage.getItem('username')
       if (username) {
         formData.append('username', username)
@@ -65,7 +64,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       }
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/upload`, {
+        const response = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         })
