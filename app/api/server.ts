@@ -87,6 +87,18 @@ app.delete('/api/delete-media/:id', async (req, res) => {
 
 // Outras rotas...
 
-export default (req: VercelRequest, res: VercelResponse) => {
-  app(req, res);
+// Modifique o handler padrão para lidar com rotas específicas
+const handler = (req: VercelRequest, res: VercelResponse) => {
+  if (req.url?.startsWith('/api')) {
+    // Remove '/api' do início da URL
+    req.url = req.url.replace(/^\/api/, '');
+  }
+  return app(req, res);
 };
+
+// Adicione um endpoint de teste
+app.get('/test', (req, res) => {
+  res.status(200).json({ message: 'API is working' });
+});
+
+export default handler;
