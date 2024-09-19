@@ -1,15 +1,16 @@
 'use client'
     
 import useSWR from 'swr'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LogOut } from 'lucide-react'
+import { X, LogOut, Trash2 } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
 import { supabase } from '../lib/supabase'
 import { MatrixRain } from './matrix-rain'
 import { useRouter } from 'next/navigation'
+import { AdminLogin } from './admin-login'
 
 const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
 
@@ -58,7 +59,7 @@ interface MediaItem {
 // Move formatDate function outside of the component
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleString('pt-BR', {
+  return date.toLocaleString('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -68,15 +69,22 @@ const formatDate = (dateString: string) => {
   });
 }
 
-export function RetroMediaGalleryComponent() {
+interface RetroMediaGalleryComponentProps {
+  onLogout: () => void;
+}
+
+export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
   const { data, error, isLoading, mutate } = useSWR<MediaItem[]>('media', fetcher, {
     refreshInterval: 60000,
   })
 
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
-  const [activeCategory, setActiveCategory] = useState<'todos' | 'imagens' | 'videos'>('todos')
+  const [activeCategory, setActiveCategory] = useState<'all' | 'images' | 'videos'>('all')
   const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminToken, setAdminToken] = useState('')
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
 
   const handleUploadSuccess = useCallback(() => {
     mutate()
@@ -85,17 +93,71 @@ export function RetroMediaGalleryComponent() {
 
   const handleLogout = () => {
     localStorage.removeItem('username')
-    router.push('/')
+    localStorage.removeItem('adminToken')
+    setIsAdmin(false)
+    setAdminToken('')
+    onLogout()
   }
 
+  const handleAdminLogin = async (username: string, password: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/admin-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (response.ok) {
+        const { token } = await response.json();
+        setIsAdmin(true);
+        setAdminToken(token);
+        localStorage.setItem('adminToken', token);
+        setShowAdminLogin(false);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Error during admin login:', error);
+    }
+  };
+
+  const handleDeleteMedia = async (id: string) => {
+    if (!isAdmin) return
+    if (confirm('Are you sure you want to delete this media?')) {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/delete-media/${id}`, {
+          method: 'DELETE',
+          headers: { 'admin-token': adminToken },
+        })
+        const result = await response.json()
+        if (response.ok) {
+          console.log('Delete result:', result)
+          mutate() // Refresh the media list
+        } else {
+          console.error('Failed to delete media:', result)
+        }
+      } catch (error) {
+        console.error('Error deleting media:', error)
+      }
+    }
+  }
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('adminToken')
+    if (storedToken) {
+      setIsAdmin(true)
+      setAdminToken(storedToken)
+    }
+  }, [])
+
   if (isLoading) return <LoadingAnimation />;
-  if (error) return <div>Erro ao carregar mídias.</div>
+  if (error) return <div>Error loading media.</div>
 
   const mediaItems = data || []
 
   const filteredMediaItems = mediaItems.filter(item => {
-    if (activeCategory === 'todos') return true
-    if (activeCategory === 'imagens') return item.type === 'image'
+    if (activeCategory === 'all') return true
+    if (activeCategory === 'images') return item.type === 'image'
     if (activeCategory === 'videos') return item.type === 'video'
     return true
   })
@@ -104,11 +166,11 @@ export function RetroMediaGalleryComponent() {
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
       <div className="relative z-10 p-8">
-        {/* Texto do criador simplificado */}
+        {/* Simplified creator text */}
         <div 
           className="absolute top-4 right-4 text-green-500 text-lg font-bold p-2 border-2 border-green-500 rounded-lg"
         >
-          Criado por Anjinho Ruindade Pura 😈
+          Created by Anjinho Ruindade Pura 😈
         </div>
         
         {/* Updated title with animation */}
@@ -147,6 +209,14 @@ export function RetroMediaGalleryComponent() {
             >
               Upload
             </button>
+            {!isAdmin && (
+              <button
+                onClick={() => setShowAdminLogin(true)}
+                className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
+              >
+                Admin Login
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300 flex items-center"
@@ -158,20 +228,28 @@ export function RetroMediaGalleryComponent() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredMediaItems.map((item: MediaItem) => (
-            <MediaItem key={item.id} item={item} onClick={() => setSelectedMedia(item)} />
+            <MediaItem 
+              key={item.id} 
+              item={item} 
+              onClick={() => setSelectedMedia(item)} 
+              onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
+            />
           ))}
         </div>
       </div>
       <SelectedMediaModal selectedMedia={selectedMedia} onClose={() => setSelectedMedia(null)} />
       <UploadModal showUpload={showUpload} onUploadSuccess={handleUploadSuccess} onClose={() => setShowUpload(false)} />
+      {showAdminLogin && (
+        <AdminLogin onLogin={handleAdminLogin} onClose={() => setShowAdminLogin(false)} />
+      )}
     </div>
   )
 }
 
 // Separate components for better organization
-const MediaItem = ({ item, onClick }: { item: MediaItem; onClick: () => void }) => (
+const MediaItem = ({ item, onClick, onDelete }: { item: MediaItem; onClick: () => void; onDelete?: () => void }) => (
   <motion.div
-    className="bg-black border-2 border-green-500 rounded-lg overflow-hidden shadow-lg hover:shadow-green-500/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+    className="bg-black border-2 border-green-500 rounded-lg overflow-hidden shadow-lg hover:shadow-green-500/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-1 relative"
     whileHover={{ scale: 1.05, borderColor: '#00FF00' }}
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
@@ -183,16 +261,28 @@ const MediaItem = ({ item, onClick }: { item: MediaItem; onClick: () => void }) 
         className="w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-        <span className="text-green-500 text-lg font-bold glitch" data-text={item.type === 'video' ? 'Ver vídeo' : 'Ver imagem'}>
-          {item.type === 'video' ? 'Ver vídeo' : 'Ver imagem'}
+        <span className="text-green-500 text-lg font-bold glitch" data-text={item.type === 'video' ? 'View video' : 'View image'}>
+          {item.type === 'video' ? 'View video' : 'View image'}
         </span>
       </div>
     </div>
     <div className="p-4">
       <h2 className="text-xl font-bold mb-2 glitch" data-text={item.title}>{item.title}</h2>
-      {item.username && <p className="text-sm text-green-400">Enviado por: {item.username}</p>}
-      <p className="text-xs text-green-300 mt-1">Enviado em: {formatDate(item.created_at)}</p>
+      {item.username && <p className="text-sm text-green-400">Uploaded by: {item.username}</p>}
+      <p className="text-xs text-green-300 mt-1">Uploaded on: {formatDate(item.created_at)}</p>
     </div>
+    {onDelete && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete()
+        }}
+        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors duration-300"
+        aria-label="Delete media"
+      >
+        <Trash2 size={16} />
+      </button>
+    )}
   </motion.div>
 )
 
@@ -210,7 +300,7 @@ const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaIt
             <button
               onClick={onClose}
               className="text-green-500 hover:text-green-300 transition-colors duration-200"
-              aria-label="Fechar"
+              aria-label="Close"
             >
               <X size={24} />
             </button>
@@ -222,7 +312,7 @@ const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaIt
               <ImageFrame
                 src={selectedMedia.src}
                 alt={selectedMedia.title || ''}
-                username={selectedMedia.username || ''}
+                username={selectedMedia.username || 'Unknown'}
                 createdAt={selectedMedia.created_at || ''}
               />
             )}
@@ -240,7 +330,7 @@ const UploadModal = ({ showUpload, onUploadSuccess, onClose }: { showUpload: boo
       <button
         onClick={onClose}
         className="absolute top-4 right-4 text-green-500 hover:text-green-300 transition-colors duration-200"
-        aria-label="Fechar"
+        aria-label="Close"
       >
         <X size={24} />
       </button>
@@ -249,21 +339,25 @@ const UploadModal = ({ showUpload, onUploadSuccess, onClose }: { showUpload: boo
 )
 
 const CategoryButtons = ({ activeCategory, setActiveCategory }: { 
-  activeCategory: 'todos' | 'imagens' | 'videos', 
-  setActiveCategory: (category: 'todos' | 'imagens' | 'videos') => void 
+  activeCategory: 'all' | 'images' | 'videos', 
+  setActiveCategory: (category: 'all' | 'images' | 'videos') => void 
 }) => (
   <div className="flex space-x-4">
-    {['todos', 'imagens', 'videos'].map((category) => (
+    {[
+      { key: 'all', label: 'All' },
+      { key: 'images', label: 'Images' },
+      { key: 'videos', label: 'Videos' }
+    ].map(({ key, label }) => (
       <button
-        key={category}
-        onClick={() => setActiveCategory(category as 'todos' | 'imagens' | 'videos')}
+        key={key}
+        onClick={() => setActiveCategory(key as 'all' | 'images' | 'videos')}
         className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
-          activeCategory === category
+          activeCategory === key
             ? 'bg-green-500 text-black shadow-lg shadow-green-500/50'
             : 'bg-black text-green-500 border border-green-500 hover:bg-green-500 hover:text-black'
         }`}
       >
-        {category.charAt(0).toUpperCase() + category.slice(1)}
+        {label}
       </button>
     ))}
   </div>
