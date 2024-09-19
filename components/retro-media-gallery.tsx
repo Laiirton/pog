@@ -15,38 +15,15 @@ import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 
-const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'https://pog-five.vercel.app/api';
+const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || '/api';
 
 // Move fetcher function outside of the component
 const fetcher = async () => {
-  const [supabaseData, driveData] = await Promise.all([
-    fetchSupabaseData(),
-    fetchDriveData()
-  ])
-  const supabaseMap = new Map(supabaseData.map(item => [item.title, item]))
-  const uniqueDriveData = driveData.filter((item: { title: string }) => !supabaseMap.has(item.title))
-
-  return [...supabaseData, ...uniqueDriveData].sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )
-}
-
-const fetchSupabaseData = async () => {
-  const { data, error } = await supabase
-    .from('media')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) throw error
-  return data
-}
-
-const fetchDriveData = async () => {
-  const response = await fetch(`${MEDIA_API_URL}/media`)
+  const response = await fetch(`${MEDIA_API_URL}/media`);
   if (!response.ok) {
-    throw new Error('Failed to fetch data from Google Drive API')
+    throw new Error('Failed to fetch media');
   }
-  return response.json()
+  return response.json();
 }
 
 interface MediaItem {
