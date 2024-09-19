@@ -10,10 +10,10 @@ import { MediaUpload } from './media-upload'
 import { supabase } from '../lib/supabase'
 import { MatrixRain } from './matrix-rain'
 import { useRouter } from 'next/navigation'
-import { AdminLogin } from './admin-login'
 import Image from 'next/image'
 import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
+import { AdminLogin } from './admin-login'
 
 const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
 
@@ -209,7 +209,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
       <div className="relative z-10 flex flex-col h-screen">
-        <header className="bg-black bg-opacity-80 p-4 flex justify-between items-center">
+        <header className="bg-black bg-opacity-80 p-4 flex justify-between items-center border-b border-green-500">
           <div className="w-1/3">
             {/* Espaço vazio à esquerda para balancear o layout */}
           </div>
@@ -241,7 +241,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
           <div className="flex space-x-4 w-1/3 justify-end">
             <Button
               onClick={() => setShowUpload(true)}
-              className="bg-green-600 hover:bg-green-700 text-black"
+              className="bg-green-600 hover:bg-green-700 text-black border border-green-300 shadow-lg shadow-green-500/50 transition-all duration-300"
             >
               <Upload size={20} className="mr-2" />
               Upload
@@ -249,7 +249,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             {!isAdmin && (
               <Button
                 onClick={() => setShowAdminLogin(true)}
-                className="bg-yellow-600 hover:bg-yellow-700 text-black"
+                className="bg-yellow-600 hover:bg-yellow-700 text-black border border-yellow-300 shadow-lg shadow-yellow-500/50 transition-all duration-300"
               >
                 <User size={20} className="mr-2" />
                 Admin Login
@@ -257,7 +257,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             )}
             <Button
               onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-white border border-red-300 shadow-lg shadow-red-500/50 transition-all duration-300"
             >
               <LogOut size={20} className="mr-2" />
               Logout
@@ -268,7 +268,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
         <main className="flex-grow overflow-auto p-8 custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">Filters</h2>
+              <h2 className="text-2xl font-bold mb-4 text-green-500">Filters</h2>
               <FilterComponentsComponent
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
@@ -297,7 +297,21 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       </div>
 
       <SelectedMediaModal selectedMedia={selectedMedia} onClose={() => setSelectedMedia(null)} />
-      <UploadModal showUpload={showUpload} onUploadSuccess={handleUploadSuccess} onClose={() => setShowUpload(false)} />
+      {showUpload && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
+          <div className="bg-black border border-green-500 rounded-lg p-6 relative max-w-md w-full">
+            <button
+              onClick={() => setShowUpload(false)}
+              className="absolute top-2 right-2 text-green-500 hover:text-green-300 transition-colors duration-200"
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-green-500">Upload Media</h2>
+            <MediaUpload onUploadSuccess={handleUploadSuccess} />
+          </div>
+        </div>
+      )}
       {showAdminLogin && (
         <AdminLogin onLogin={handleAdminLogin} onClose={() => setShowAdminLogin(false)} />
       )}
@@ -405,16 +419,14 @@ const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaIt
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
       >
-        <div className="w-full max-w-4xl">
-          <div className="flex justify-end mb-2">
-            <button
-              onClick={onClose}
-              className="text-green-500 hover:text-green-300 transition-colors duration-200"
-              aria-label="Close"
-            >
-              <X size={24} />
-            </button>
-          </div>
+        <div className="w-full max-w-4xl relative">
+          <button
+            onClick={onClose}
+            className="absolute -top-10 right-0 text-green-500 hover:text-green-300 transition-colors duration-200 bg-black bg-opacity-50 rounded-full p-2"
+            aria-label="Close"
+          >
+            <X size={24} />
+          </button>
           <div className="w-full aspect-video">
             {selectedMedia.type === 'video' ? (
               <VideoPlayer src={selectedMedia.src} title={selectedMedia.title} />
@@ -431,46 +443,6 @@ const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaIt
       </motion.div>
     )}
   </AnimatePresence>
-)
-
-const UploadModal = ({ showUpload, onUploadSuccess, onClose }: { showUpload: boolean; onUploadSuccess: () => void; onClose: () => void }) => (
-  showUpload && (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-      <MediaUpload onUploadSuccess={onUploadSuccess} />
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 text-green-500 hover:text-green-300 transition-colors duration-200"
-        aria-label="Close"
-      >
-        <X size={24} />
-      </button>
-    </div>
-  )
-)
-
-const CategoryButtons = ({ activeCategory, setActiveCategory }: { 
-  activeCategory: 'all' | 'images' | 'videos', 
-  setActiveCategory: (category: 'all' | 'images' | 'videos') => void 
-}) => (
-  <div className="flex space-x-4">
-    {[
-      { key: 'all', label: 'All' },
-      { key: 'images', label: 'Images' },
-      { key: 'videos', label: 'Videos' }
-    ].map(({ key, label }) => (
-      <button
-        key={key}
-        onClick={() => setActiveCategory(key as 'all' | 'images' | 'videos')}
-        className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
-          activeCategory === key
-            ? 'bg-green-500 text-black shadow-lg shadow-green-500/50'
-            : 'bg-black text-green-500 border border-green-500 hover:bg-green-500 hover:text-black'
-        }`}
-      >
-        {label}
-      </button>
-    ))}
-  </div>
 )
 
 export const LoadingAnimation = () => {
