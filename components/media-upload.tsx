@@ -68,18 +68,18 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.error || 'Falha no upload')
+          throw new Error(errorData.error || 'Upload failed')
         }
 
         const result = await response.json()
-        console.log('Arquivo enviado com sucesso:', result)
+        console.log('File uploaded successfully:', result)
         
         setFile(null)
         setFileName('')
         onUploadSuccess()
       } catch (error) {
-        console.error('Erro ao fazer upload:', error)
-        setUploadError(error instanceof Error ? error.message : 'Erro desconhecido no upload')
+        console.error('Error uploading:', error)
+        setUploadError(error instanceof Error ? error.message : 'Unknown upload error')
       } finally {
         setIsUploading(false)
       }
@@ -115,7 +115,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
             ) : (
               <div className="space-y-4">
                 <Upload className="mx-auto text-green-500" size={48} />
-                <p className="text-green-500">Arraste e solte seu arquivo de mídia aqui, ou clique para selecionar</p>
+                <p className="text-green-500">Drag and drop your media file here, or click to select</p>
               </div>
             )}
             <input
@@ -131,7 +131,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
               type="text"
               value={fileName}
               onChange={(e) => setFileName(e.target.value)}
-              placeholder="Digite o nome desejado para o arquivo"
+              placeholder="Enter desired file name"
               className="w-full p-2 bg-black bg-opacity-50 border border-green-500 rounded text-green-400 placeholder-green-600"
             />
             <button
@@ -142,10 +142,10 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
               {isUploading ? (
                 <>
                   <Loader className="animate-spin mr-2" size={20} />
-                  Enviando...
+                  Uploading...
                 </>
               ) : (
-                'Enviar para Pog Gallery'
+                'Upload to Pog Gallery'
               )}
             </button>
             {uploadError && (
