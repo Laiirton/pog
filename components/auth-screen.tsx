@@ -7,44 +7,37 @@ import { Register } from './register'
 import { MatrixRain } from './matrix-rain'
 
 interface AuthScreenProps {
-  onAuthSuccess: () => void;
+  onAuthSuccess: (username: string) => void;
 }
 
 export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   const [showLogin, setShowLogin] = useState(true)
-  const [showIntro, setShowIntro] = useState(true)
 
-  const handleContinue = () => {
-    setShowIntro(false)
-  }
+  const handleAuthSuccess = (username: string) => {
+    onAuthSuccess(username);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black overflow-hidden relative">
       <MatrixRain />
-      <AnimatePresence>
-        {showIntro ? (
-          <IntroScreen onContinue={handleContinue} />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="z-10"
+      >
+        {showLogin ? (
+          <Login
+            onLoginSuccess={handleAuthSuccess}
+            onSwitchToRegister={() => setShowLogin(false)}
+          />
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="z-10"
-          >
-            {showLogin ? (
-              <Login
-                onLoginSuccess={onAuthSuccess}
-                onSwitchToRegister={() => setShowLogin(false)}
-              />
-            ) : (
-              <Register
-                onRegistrationSuccess={onAuthSuccess}
-                onSwitchToLogin={() => setShowLogin(true)}
-              />
-            )}
-          </motion.div>
+          <Register
+            onRegistrationSuccess={handleAuthSuccess}
+            onSwitchToLogin={() => setShowLogin(true)}
+          />
         )}
-      </AnimatePresence>
+      </motion.div>
     </div>
   )
 }
