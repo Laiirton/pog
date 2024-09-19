@@ -1,43 +1,44 @@
 'use client'
 
 import { RetroMediaGalleryComponent } from '../components/retro-media-gallery';
-import { Register } from '../components/register';
+import { AuthScreen } from '../components/auth-screen';
 import { useState, useEffect } from 'react';
-import { LoadingAnimation } from '../components/retro-media-gallery'; // Importe o LoadingAnimation
+import { LoadingAnimation } from '../components/retro-media-gallery';
 
 export default function Home() {
-  const [showRegister, setShowRegister] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkUser = () => {
       setIsLoading(true);
       const storedUsername = localStorage.getItem('username');
-      setShowRegister(!storedUsername);
+      setIsAuthenticated(!!storedUsername);
       setIsLoading(false);
     };
 
     checkUser();
   }, []);
 
-  const handleRegistrationComplete = () => {
-    setShowRegister(false);
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
-    setShowRegister(true);
+    localStorage.removeItem('username');
+    setIsAuthenticated(false);
   };
 
   if (isLoading) {
-    return <LoadingAnimation />; // Use o LoadingAnimation aqui
+    return <LoadingAnimation />;
   }
 
   return (
     <main>
-      {showRegister ? (
-        <Register onRegistrationComplete={handleRegistrationComplete} />
-      ) : (
+      {isAuthenticated ? (
         <RetroMediaGalleryComponent onLogout={handleLogout} />
+      ) : (
+        <AuthScreen onAuthSuccess={handleAuthSuccess} />
       )}
     </main>
   );
