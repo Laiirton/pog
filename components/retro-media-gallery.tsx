@@ -15,7 +15,7 @@ import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 
-const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
+const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'https://your-vercel-deployment-url.vercel.app/api';
 
 // Move fetcher function outside of the component
 const fetcher = async () => {
@@ -121,7 +121,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 
   const handleAdminLogin = async (username: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/admin-login`, {
+      const response = await fetch(`${MEDIA_API_URL}/admin-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -145,7 +145,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     if (!isAdmin) return
     if (confirm('Are you sure you want to delete this media?')) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/delete-media/${id}`, {
+        const response = await fetch(`${MEDIA_API_URL}/delete-media/${id}`, {
           method: 'DELETE',
           headers: { 'admin-token': adminToken },
         })
