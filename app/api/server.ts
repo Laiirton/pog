@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { NowRequest, NowResponse } from '@vercel/node'; // Importe os tipos do Vercel
 
 dotenv.config();
 
@@ -35,11 +36,16 @@ oauth2Client.setCredentials({
 
 // Middleware
 app.use(cors({
-  origin: 'https://pog-git-master-lairtons-projects.vercel.app', // Adicione o domínio do Vercel aqui
+  origin: ['https://pog-git-master-lairtons-projects.vercel.app', 'https://pog-five.vercel.app', 'https://pog-a1877eeot-lairtons-projects.vercel.app'], // Adicione todos os domínios necessários
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(bodyParser.json());
+
+app.use((req, res, next) => {
+  console.log(`Request Method: ${req.method}, Request Origin: ${req.headers.origin}`);
+  next();
+});
 
 // Rotas
 app.options('*', cors()); // Habilitar CORS para todas as rotas
@@ -81,7 +87,6 @@ app.delete('/api/delete-media/:id', async (req, res) => {
 
 // Outras rotas...
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+export default (req: NowRequest, res: NowResponse) => {
+  app(req, res);
+};
