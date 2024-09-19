@@ -3,7 +3,7 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "types": ["node", "express", "multer", "@types/cors", "bcrypt", "jsonwebtoken", "body-parser"],
+    "types": ["node", "express", "multer", "bcrypt", "jsonwebtoken", "body-parser"],
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
