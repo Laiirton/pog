@@ -8,13 +8,15 @@ const ffmpeg = require('fluent-ffmpeg');
 const multer = require('multer');
 const { Readable } = require('stream'); 
 const { createClient } = require('@supabase/supabase-js');
+const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const app = express();
 const port = process.env.PORT || 30010;
 
-// Atualizar os escopos para incluir permissões de escrita
+// Update scopes to include write permissions
 const SCOPES = [
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/drive.file'
@@ -28,8 +30,9 @@ const FOLDER_ID = process.env.FOLDER_ID;
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
 app.use(cors());
+app.use(bodyParser.json());
 
-// Configurar o armazenamento do multer
+// Configure multer storage
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -47,10 +50,10 @@ app.get('/oauth2callback', async (req, res) => {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
     fs.writeFileSync('tokens.json', JSON.stringify(tokens));
-    res.send('Autenticação concluída. Você pode fechar esta janela.');
+    res.send('Authentication completed. You can close this window.');
   } catch (error) {
-    console.error('Erro na callback OAuth2:', error);
-    res.status(500).send('Erro na autenticação.');
+    console.error('Error in OAuth2 callback:', error);
+    res.status(500).send('Authentication error.');
   }
 });
 
@@ -60,9 +63,9 @@ const loadTokens = () => {
   try {
     tokens = JSON.parse(fs.readFileSync('tokens.json'));
     oauth2Client.setCredentials(tokens);
-    console.log('Tokens carregados com sucesso.');
+    console.log('Tokens loaded successfully.');
   } catch (error) {
-    console.error('Erro ao carregar tokens:', error);
+    console.error('Error loading tokens:', error);
   }
 };
 
@@ -89,7 +92,7 @@ app.get('/media', async (req, res) => {
     res.json(mediaItems);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: 'Erro ao transmitir arquivos do Google Drive' });
+    res.status(500).json({ error: 'Error transmitting files from Google Drive' });
   }
 });
 
@@ -107,20 +110,20 @@ app.get('/file/:fileId', async (req, res) => {
 
     file.data
       .on('end', () => {
-        console.log('Download concluído.');
+        console.log('Download completed.');
       })
       .on('error', err => {
-        console.error('Erro durante o download:', err);
-        res.status(500).send('Erro ao baixar o arquivo.');
+        console.error('Error during download:', err);
+        res.status(500).send('Error downloading file.');
       })
       .pipe(res);
   } catch (error) {
-    console.error('Erro ao recuperar o arquivo:', error);
-    res.status(500).send('Erro ao recuperar o arquivo.');
+    console.error('Error retrieving file:', error);
+    res.status(500).send('Error retrieving file.');
   }
 });
 
-// Endpoint para gerar thumbnails
+// Endpoint for generating thumbnails
 app.get('/thumbnail/:fileId', async (req, res) => {
   loadTokens();
 
@@ -152,35 +155,35 @@ app.get('/thumbnail/:fileId', async (req, res) => {
         .on('end', () => {
           res.sendFile(tempThumbnailPath, (err) => {
             if (err) {
-              console.error('Erro ao enviar thumbnail:', err);
-              res.status(500).send('Erro ao enviar thumbnail.');
+              console.error('Error sending thumbnail:', err);
+              res.status(500).send('Error sending thumbnail.');
             }
             fs.unlinkSync(tempFilePath);
             fs.unlinkSync(tempThumbnailPath);
           });
         })
         .on('error', (err) => {
-          console.error('Erro ao gerar thumbnail:', err);
-          res.status(500).send('Erro ao gerar thumbnail.');
+          console.error('Error generating thumbnail:', err);
+          res.status(500).send('Error generating thumbnail.');
         });
     });
 
     writeStream.on('error', (err) => {
-      console.error('Erro ao gravar arquivo temporário:', err);
-      res.status(500).send('Erro ao processar thumbnail.');
+      console.error('Error writing temporary file:', err);
+      res.status(500).send('Error processing thumbnail.');
     });
   } catch (error) {
-    console.error('Erro ao processar thumbnail:', error);
-    res.status(500).send('Erro ao processar thumbnail.');
+    console.error('Error processing thumbnail:', error);
+    res.status(500).send('Error processing thumbnail.');
   }
 });
 
-// Novo endpoint para upload de arquivos
+// New endpoint for uploading files
 app.post('/upload', upload.single('file'), async (req, res) => {
   loadTokens();
 
   if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+    return res.status(400).json({ error: 'No file uploaded.' });
   }
 
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
@@ -201,9 +204,9 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       media: media,
       fields: 'id',
     });
-    console.log('Arquivo enviado com sucesso para o Google Drive. ID:', file.data.id);
+    console.log('File uploaded successfully to Google Drive. ID:', file.data.id);
 
-    // Salvar informações no Supabase
+    // Save information to Supabase
     const { data, error } = await supabase
       .from('media')
       .insert([
@@ -218,33 +221,91 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       .select();
 
     if (error) {
-      console.error('Erro ao salvar no Supabase:', error);
+      console.error('Error saving to Supabase:', error);
       if (error.code === '23502') {
-        return res.status(400).json({ error: 'Dados incompletos. Verifique se todos os campos obrigatórios foram preenchidos.' });
+        return res.status(400).json({ error: 'Incomplete data. Please ensure all required fields are filled out.' });
       }
-      return res.status(500).json({ error: 'Erro ao salvar os dados no banco de dados.' });
+      return res.status(500).json({ error: 'Error saving data to the database.' });
     }
 
-    // Remover o arquivo temporário, se existir
+    // Remove temporary file if exists
     if (req.file.path) {
       fs.unlink(req.file.path, (err) => {
         if (err) {
-          console.error('Erro ao remover arquivo temporário:', err);
+          console.error('Error removing temporary file:', err);
         } else {
-          console.log('Arquivo temporário removido com sucesso');
+          console.log('Temporary file removed successfully');
         }
       });
     }
 
     res.status(200).json({ fileId: file.data.id, supabaseData: data });
   } catch (error) {
-    console.error('Erro ao fazer upload do arquivo:', error);
-    res.status(500).json({ error: 'Erro ao fazer upload do arquivo.' });
+    console.error('Error uploading file:', error);
+    res.status(500).json({ error: 'Error uploading file.' });
+  }
+});
+
+app.post('/admin-login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    const token = jwt.sign({ isAdmin: true }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// Add this function at the top of the file, along with other helper functions
+const verifyAdminToken = (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded.isAdmin === true;
+  } catch (error) {
+    console.error('Error verifying admin token:', error);
+    return false;
+  }
+};
+
+// Add this new endpoint to delete media
+app.delete('/delete-media/:id', async (req, res) => {
+  console.log('Delete request received for id:', req.params.id);
+  const adminToken = req.headers['admin-token'];
+  console.log('Admin token:', adminToken);
+  if (!verifyAdminToken(adminToken)) {
+    console.log('Admin token verification failed');
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  const { id } = req.params;
+
+  try {
+    // Delete from Google Drive
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    await drive.files.delete({ fileId: id });
+    console.log('File deleted from Google Drive:', id);
+
+    // No longer deleting from Supabase, just updating the status
+    const { data, error } = await supabase
+      .from('media')
+      .update({ status: 'deleted' })
+      .eq('src', `${process.env.MEDIA_URL}/file/${id}`);
+
+    if (error) {
+      console.warn('Failed to update Supabase record:', error);
+      // Continue even if Supabase update fails
+    }
+
+    console.log('Media deleted successfully');
+    res.status(200).json({ message: 'Media deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting media:', error);
+    res.status(500).json({ error: `Failed to delete media: ${error.message}` });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
-  console.log(`Acesse http://localhost:${port}/auth para autenticar`);
-  loadTokens(); // Carregar tokens ao iniciar o servidor
+  console.log(`Server running at http://localhost:${port}`);
+  console.log(`Access http://localhost:${port}/auth to authenticate`);
+  loadTokens(); // Load tokens when starting the server
 });
