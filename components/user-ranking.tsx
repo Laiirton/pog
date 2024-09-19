@@ -13,7 +13,7 @@ export function UserRanking() {
   useEffect(() => {
     const fetchRanking = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDIA_API_URL}/user-ranking`);
+        const response = await fetch('/api/user-ranking'); // URL relativa
         if (response.ok) {
           const data = await response.json();
           setRanking(data);
