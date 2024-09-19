@@ -41,13 +41,12 @@ export async function GET(
           folder: '/tmp',
         })
         .on('end', () => {
-          const fs = require('fs');
           const thumbnailStream = fs.createReadStream('/tmp/thumbnail.png');
           const headers = new Headers();
           headers.set('Content-Type', 'image/png');
           resolve(new NextResponse(thumbnailStream, { headers }));
         })
-        .on('error', (err: any) => {
+        .on('error', (err) => {
           console.error('Error generating thumbnail:', err);
           reject(NextResponse.json({ error: 'Error generating thumbnail' }, { status: 500 }));
         });
