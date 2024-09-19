@@ -13,9 +13,10 @@ import Image from 'next/image'
 import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
+import { LoadingAnimation } from './loading-animation'
 
 const fetcher = async (url: string) => {
-  const response = await fetch(`/api/${url}`);
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -49,7 +50,16 @@ interface RetroMediaGalleryComponentProps {
 }
 
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
-  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('media', fetcher);
+  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher);
+
+  if (error) {
+    console.error('Error fetching media:', error);
+    return <div>Error loading media. Please try again later.</div>;
+  }
+
+  if (!mediaItems) {
+    return <LoadingAnimation />;
+  }
 
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
@@ -162,8 +172,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       }
     }
   }, [])
-
-  if (error) return <div>Error loading media: {error.message}</div>
 
   const filteredMediaItems = useMemo(() => {
     if (!mediaItems) return [];
