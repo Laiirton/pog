@@ -330,6 +330,7 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: {
   isLoaded: boolean;
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   return (
     <motion.div
@@ -339,17 +340,24 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: {
       onClick={onClick}
     >
       <div className="relative aspect-video">
-        <Image
-          src={item.thumbnail}
-          alt={item.title}
-          layout="fill"
-          objectFit="cover"
-          className={`transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-          onLoad={() => setImageLoaded(true)}
-          placeholder="blur"
-          blurDataURL="/placeholder.jpg"
-        />
-        {!imageLoaded && (
+        {!imageError ? (
+          <Image
+            src={item.thumbnail}
+            alt={item.title}
+            layout="fill"
+            objectFit="cover"
+            className={`transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+            placeholder="blur"
+            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+          />
+        ) : (
+          <div className="absolute inset-0 bg-black flex items-center justify-center">
+            <span className="text-green-500">Image not available</span>
+          </div>
+        )}
+        {!imageLoaded && !imageError && (
           <div className="absolute inset-0 bg-black flex items-center justify-center">
             <span className="text-green-500">Loading...</span>
           </div>
