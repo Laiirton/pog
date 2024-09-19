@@ -15,7 +15,7 @@ import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 
-const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'https://your-vercel-deployment-url.vercel.app/api';
+const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'https://pog-five.vercel.app/api';
 
 // Move fetcher function outside of the component
 const fetcher = async () => {
