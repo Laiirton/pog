@@ -1,4 +1,4 @@
-import type { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
