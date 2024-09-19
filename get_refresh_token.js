@@ -5,7 +5,7 @@ import open from 'open';
 import destroyer from 'server-destroy';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -29,7 +29,7 @@ async function getRefreshToken() {
       .createServer(async (req, res) => {
         try {
           if (req.url.indexOf('/oauth2callback') > -1) {
-            const qs = new URL(req.url, 'http://localhost:3001')
+            const qs = new URL(req.url, 'http://localhost:3000')
               .searchParams;
             const code = qs.get('code');
             console.log(`Code is ${code}`);
@@ -46,7 +46,7 @@ async function getRefreshToken() {
           reject(e);
         }
       })
-      .listen(3001, () => {
+      .listen(3000, () => {
         open(authorizeUrl, { wait: false }).then(cp => cp.unref());
       });
     destroyer(server);
@@ -54,7 +54,7 @@ async function getRefreshToken() {
 }
 
 getRefreshToken().then((refreshToken) => {
-  console.log('Add this refresh token to your .env.local file:');
+  console.log('Add this refresh token to your .env file:');
   console.log(`GOOGLE_DRIVE_REFRESH_TOKEN=${refreshToken}`);
 }).catch((error) => {
   console.error('Error getting refresh token:', error);
