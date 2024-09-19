@@ -18,15 +18,14 @@ export default function Home() {
     };
 
     checkUser();
-    window.addEventListener('storage', checkUser);
-
-    return () => {
-      window.removeEventListener('storage', checkUser);
-    };
   }, []);
 
   const handleRegistrationComplete = () => {
     setShowRegister(false);
+  };
+
+  const handleLogout = () => {
+    setShowRegister(true);
   };
 
   if (isLoading) {
@@ -38,7 +37,7 @@ export default function Home() {
       {showRegister ? (
         <Register onRegistrationComplete={handleRegistrationComplete} />
       ) : (
-        <RetroMediaGalleryComponent />
+        <RetroMediaGalleryComponent onLogout={handleLogout} />
       )}
     </main>
   );
