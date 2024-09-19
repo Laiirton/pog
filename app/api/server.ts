@@ -35,7 +35,7 @@ oauth2Client.setCredentials({
 
 // Middleware
 app.use(cors({
-  origin: '*', // Ajuste conforme necessário
+  origin: 'https://pog-git-master-lairtons-projects.vercel.app', // Adicione o domínio do Vercel aqui
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
