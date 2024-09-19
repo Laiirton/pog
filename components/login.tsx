@@ -41,8 +41,7 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('username', username);
-        onLoginSuccess();
+        onLoginSuccess(username);
       } else {
         setError(data.error || 'Login failed');
       }
