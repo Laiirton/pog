@@ -3,6 +3,7 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
+    "types": ["node", "express", "multer", "@types/cors", "bcrypt", "jsonwebtoken", "body-parser"],
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
@@ -20,7 +21,6 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "types": ["node", "express", "multer", "cors", "bcrypt", "jsonwebtoken", "body-parser"],
     "typeRoots": ["./node_modules/@types", "./"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "global.d.ts", "app/api/**/*.ts"],
