@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "server": "node api/server.js"
+    "server": "ts-node app/api/server.ts"
   },
   "dependencies": {
     "@localnerve/google-drive-folder": "^7.9.0",
