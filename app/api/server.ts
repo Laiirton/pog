@@ -15,33 +15,42 @@ import bcrypt from 'bcrypt';
 dotenv.config();
 
 const app = express();
-// ... resto do código ...
 
-// Corrigir o erro de variável não utilizada
-app.delete('/delete-media/:id', async (req, res) => {
-  const { id } = req.params;
-  
-  try {
-    const { data: updateData, error: updateError } = await supabase
-      .from('media')
-      .update({ status: 'deleted' })
-      .eq('src', `${process.env.MEDIA_URL}/file/${id}`);
+// Configuração do Supabase
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-    if (updateError) {
-      console.warn('Failed to update Supabase record:', updateError);
-      return res.status(500).json({ error: 'Failed to update database record' });
-    }
+// Configuração do Google Drive
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_DRIVE_CLIENT_ID,
+  process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+  process.env.GOOGLE_DRIVE_REDIRECT_URI
+);
 
-    // ... resto do código de deleção ...
-
-    res.json({ message: 'Media deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting media:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+oauth2Client.setCredentials({
+  refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
 });
 
-// ... resto do código ...
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// Rotas
+app.get('/api/media', async (req, res) => {
+  // Implementação da rota para buscar mídia
+});
+
+app.post('/api/upload', multer().single('file'), async (req, res) => {
+  // Implementação da rota de upload
+});
+
+app.delete('/api/delete-media/:id', async (req, res) => {
+  // Implementação da rota de deleção
+});
+
+// Outras rotas...
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
