@@ -138,20 +138,28 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
               placeholder="Enter desired file name"
               className="w-full p-2 bg-black bg-opacity-50 border border-green-500 rounded text-green-400 placeholder-green-600"
             />
-            <button
-              onClick={handleUpload}
-              className="w-full bg-green-600 hover:bg-green-700 text-black font-bold py-3 px-4 rounded transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              disabled={!file || !fileName || isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Loader className="animate-spin mr-2" size={20} />
-                  Uploading...
-                </>
-              ) : (
-                'Upload to Pog Gallery'
-              )}
-            </button>
+            <div className="flex space-x-4">
+              <button
+                onClick={handleUpload}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-black font-bold py-3 px-4 rounded transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                disabled={!file || !fileName || isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader className="animate-spin mr-2" size={20} />
+                    Uploading...
+                  </>
+                ) : (
+                  'Upload to Pog Gallery'
+                )}
+              </button>
+              <button
+                onClick={onUploadSuccess}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded transition-colors duration-300"
+              >
+                Cancel
+              </button>
+            </div>
             {uploadError && (
               <p className="text-red-500 text-sm">{uploadError}</p>
             )}
