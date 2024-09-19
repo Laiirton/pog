@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { NowRequest, NowResponse } from '@vercel/node'; // Importe os tipos do Vercel
+import { VercelRequest, VercelResponse } from '@vercel/node'; // Atualizado para VercelRequest e VercelResponse
 
 dotenv.config();
 
@@ -87,6 +87,6 @@ app.delete('/api/delete-media/:id', async (req, res) => {
 
 // Outras rotas...
 
-export default (req: NowRequest, res: NowResponse) => {
+export default (req: VercelRequest, res: VercelResponse) => {
   app(req, res);
 };
