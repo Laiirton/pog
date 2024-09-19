@@ -60,54 +60,59 @@ function IntroScreen({ onContinue }: { onContinue: () => void }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-black bg-opacity-80 p-8 rounded-lg shadow-lg border border-green-500 w-full max-w-4xl z-10 text-green-500"
+      className="bg-black bg-opacity-80 p-8 rounded-lg shadow-lg border border-green-500 w-full max-w-6xl z-10 text-green-500 flex flex-col md:flex-row gap-8"
     >
-      <motion.h1
-        className="text-5xl font-bold mb-6 text-center"
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        Welcome to Pog Gallery
-      </motion.h1>
-      <motion.div
-        className="space-y-4 text-lg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        <p>
-          Step into the digital realm of Pog Gallery, where the retro-futuristic aesthetics of cyberpunk meet the cutting-edge world of media sharing.
-        </p>
-        <p>
-          In this neon-lit corner of the internet, your images and videos become more than just files – they're digital artifacts in a world where bits and pixels reign supreme.
-        </p>
-        <p>
-          Upload your media, and watch as it becomes part of our ever-growing digital tapestry. Each file you share adds to the collective consciousness of our cyber community.
-        </p>
-        <p>
-          But beware, in this digital frontier, your username is your identity, your password is your key, and your uploads are your legacy. Choose wisely, upload boldly, and leave your mark on the Pog Gallery grid.
-        </p>
-        <motion.p
-          className="text-green-400 font-bold italic relative"
+      <div className="md:w-2/3">
+        <motion.h1
+          className="text-5xl font-bold mb-6 text-center md:text-left"
+          initial={{ scale: 0.9 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          Welcome to Pog Gallery
+        </motion.h1>
+        <motion.div
+          className="space-y-4 text-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.3 }}
         >
-          <span className="glitch-text" data-text="Created by Anjinho Ruindade Pura 😈">
-            Created by Anjinho Ruindade Pura 😈
-          </span>
-        </motion.p>
-      </motion.div>
-      <div className="flex justify-center mt-8">
-        <motion.button
-          onClick={onContinue}
-          className="bg-green-500 hover:bg-green-600 text-black font-bold py-3 px-6 rounded-md transition-colors duration-300 ease-in-out transform hover:scale-105"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Enter the Grid
-        </motion.button>
+          <p>
+            Step into the digital realm of Pog Gallery, where the retro-futuristic aesthetics of cyberpunk meet the cutting-edge world of media sharing.
+          </p>
+          <p>
+            In this neon-lit corner of the internet, your images and videos become more than just files – they're digital artifacts in a world where bits and pixels reign supreme.
+          </p>
+          <p>
+            Upload your media, and watch as it becomes part of our ever-growing digital tapestry. Each file you share adds to the collective consciousness of our cyber community.
+          </p>
+          <p>
+            But beware, in this digital frontier, your username is your identity, your password is your key, and your uploads are your legacy. Choose wisely, upload boldly, and leave your mark on the Pog Gallery grid.
+          </p>
+          <motion.p
+            className="text-green-400 font-bold italic relative"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <span className="glitch-text" data-text="Created by Anjinho Ruindade Pura 😈">
+              Created by Anjinho Ruindade Pura 😈
+            </span>
+          </motion.p>
+        </motion.div>
+        <div className="flex justify-center md:justify-start mt-8">
+          <motion.button
+            onClick={onContinue}
+            className="bg-green-500 hover:bg-green-600 text-black font-bold py-3 px-6 rounded-md transition-colors duration-300 ease-in-out transform hover:scale-105"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Enter the Grid
+          </motion.button>
+        </div>
+      </div>
+      <div className="md:w-1/3">
+        <UserRanking />
       </div>
     </motion.div>
   )
