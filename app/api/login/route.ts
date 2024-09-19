@@ -1,4 +1,4 @@
-import type { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
