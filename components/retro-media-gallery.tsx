@@ -7,7 +7,6 @@ import { X, LogOut, Trash2, Upload, User } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
-import { supabase } from '../lib/supabase'
 import { MatrixRain } from './matrix-rain'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -15,19 +14,12 @@ import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 
-const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'https://pog-five.vercel.app/api';
-
-const fetcher = async () => {
-  try {
-    const response = await fetch(`${MEDIA_API_URL}/media`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  } catch (error) {
-    console.error('Error fetching media:', error);
-    throw error;
+const fetcher = async (url: string) => {
+  const response = await fetch(`/api/${url}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
+  return response.json();
 }
 
 interface MediaItem {
@@ -81,7 +73,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 
   useEffect(() => {
     if (data) {
-      const users = Array.from(new Set(data.map(item => item.username).filter(Boolean) as string[]));
+      const users = Array.from(new Set(data.map((item: MediaItem) => item.username).filter(Boolean) as string[]));
       setAllUsers(users);
     }
   }, [data]);
@@ -101,7 +93,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 
   const handleAdminLogin = async (username: string, password: string) => {
     try {
-      const response = await fetch(`${MEDIA_API_URL}/admin-login`, {
+      const response = await fetch('/api/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -125,7 +117,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     if (!isAdmin) return
     if (confirm('Are you sure you want to delete this media?')) {
       try {
-        const response = await fetch(`${MEDIA_API_URL}/delete-media/${id}`, {
+        const response = await fetch(`/api/delete-media/${id}`, {
           method: 'DELETE',
           headers: { 'admin-token': adminToken },
         })
@@ -177,7 +169,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 
   const mediaItems = data || []
 
-  const filteredMediaItems = mediaItems.filter(item => {
+  const filteredMediaItems = mediaItems.filter((item: MediaItem) => {
     if (selectedType !== 'all' && item.type !== selectedType) return false
     if (selectedUser && item.username !== selectedUser) return false
     if (title && !item.title.toLowerCase().includes(title.toLowerCase())) return false
