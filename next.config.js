@@ -1,19 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', process.env.NEXT_PUBLIC_MEDIA_API_URL].filter(Boolean).map(domain => domain.replace(/^https?:\/\//, '')),
+    domains: ['localhost', 'pog-five.vercel.app'].filter(Boolean),
   },
   eslint: {
-    ignoreDuringBuilds: true, // Temporariamente ignore os erros de ESLint durante o build
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // Use isso apenas temporariamente
+    ignoreBuildErrors: true,
   },
   rewrites: async () => {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://your-vercel-deployment-url.vercel.app/api/:path*',
+        destination: 'https://pog-five.vercel.app/api/:path*',
       },
     ];
   },
