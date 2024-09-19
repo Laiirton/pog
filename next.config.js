@@ -9,7 +9,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true, // Use isso apenas temporariamente
   },
-  // Outras configurações existentes (se houver)
+  rewrites: async () => {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://your-vercel-deployment-url.vercel.app/api/:path*',
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig
