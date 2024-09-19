@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pog Gallery
 
-## Getting Started
+Pog Gallery é uma plataforma de compartilhamento de mídia única, que combina a estética retro-futurista do cyberpunk com tecnologias web modernas. Este projeto oferece aos usuários uma experiência imersiva para upload, visualização e compartilhamento de imagens e vídeos em um ambiente digital neon-lit.
 
-First, run the development server:
+## Sobre o Site
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Pog Gallery não é apenas uma galeria de mídia comum - é uma experiência visual e interativa que transporta os usuários para um mundo digital inspirado no cyberpunk. Aqui estão alguns destaques do que o site oferece:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Interface Cyberpunk**: Design inspirado em neon com uma paleta de cores escura e acentos brilhantes, criando uma atmosfera futurista e retrô.
+- **Galeria Interativa**: Visualize imagens e vídeos em um layout estilizado que se assemelha a uma cidade cyberpunk.
+- **Upload Personalizado**: Faça upload de suas mídias com uma interface de arrastar e soltar, mantendo o estilo único do site.
+- **Player de Vídeo Customizado**: Assista vídeos com controles personalizados que se integram perfeitamente ao design do site.
+- **Visualizador de Imagens**: Explore imagens em detalhes com opções de zoom e download.
+- **Sistema de Autenticação**: Crie sua própria identidade digital no Pog Gallery com nosso sistema de registro e login.
+- **Filtragem Avançada**: Encontre facilmente o conteúdo desejado com opções de filtragem por tipo de mídia, usuário, título e data.
+- **Design Responsivo**: Desfrute da experiência Pog Gallery em qualquer dispositivo, de desktops a smartphones.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Características Técnicas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Frontend construído com Next.js, React e TypeScript
+- Estilização avançada usando Tailwind CSS
+- Animações fluidas com Framer Motion
+- Backend robusto com Express.js
+- Armazenamento seguro de arquivos
+- Sistema de gerenciamento de banco de dados
 
-## Learn More
+Pog Gallery não é apenas um site - é um portal para um mundo digital onde suas mídias ganham vida em um ambiente cyberpunk vibrante e envolvente.
 
-To learn more about Next.js, take a look at the following resources:
+## Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Sistema de autenticação de usuários
+- Funcionalidade de upload de mídia para imagens e vídeos
+- Visualização de galeria em estilo retrô com design inspirado no cyberpunk
+- Player de vídeo com controles personalizados
+- Visualizador de imagens com capacidade de download
+- Design responsivo para vários tamanhos de tela
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tecnologias Utilizadas
 
-## Deploy on Vercel
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Framer Motion para animações
+- SWR para busca de dados
+- Express.js para o servidor backend
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pog Gallery é uma experiência única de compartilhamento de mídia, combinando tecnologia de ponta com um design visualmente deslumbrante e temático.
