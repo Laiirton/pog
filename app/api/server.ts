@@ -36,12 +36,14 @@ oauth2Client.setCredentials({
 // Middleware
 app.use(cors({
   origin: '*', // Ajuste conforme necessário
-  methods: ['GET', 'POST', 'DELETE'],
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(bodyParser.json());
 
 // Rotas
+app.options('*', cors()); // Habilitar CORS para todas as rotas
+
 app.get('/api/media', async (req, res) => {
   console.log('GET /api/media called');
   try {
