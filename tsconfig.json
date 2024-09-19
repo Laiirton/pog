@@ -23,6 +23,6 @@
     "types": ["node", "express", "multer", "cors", "bcrypt", "jsonwebtoken", "body-parser"],
     "typeRoots": ["./node_modules/@types", "./"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "global.d.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "global.d.ts", "app/api/**/*.ts"],
   "exclude": ["node_modules"]
 }
