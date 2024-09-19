@@ -101,10 +101,10 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 
   useEffect(() => {
     if (data) {
-      const users = [...new Set(data.map(item => item.username).filter(Boolean))]
-      setAllUsers(users)
+      const users = Array.from(new Set(data.map(item => item.username).filter(Boolean) as string[]));
+      setAllUsers(users);
     }
-  }, [data])
+  }, [data]);
 
   const handleUploadSuccess = useCallback(() => {
     mutate()
