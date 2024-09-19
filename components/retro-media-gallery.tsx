@@ -389,40 +389,55 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: {
   )
 }
 
-const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaItem | null; onClose: () => void }) => (
-  <AnimatePresence>
-    {selectedMedia && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
-      >
-        <div className="w-full max-w-4xl relative">
-          <button
-            onClick={onClose}
-            className="absolute -top-10 right-0 text-green-500 hover:text-green-300 transition-colors duration-200 bg-black bg-opacity-50 rounded-full p-2"
-            aria-label="Close"
-          >
-            <X size={24} />
-          </button>
-          <div className="w-full aspect-video">
-            {selectedMedia.type === 'video' ? (
-              <VideoPlayer src={selectedMedia.src} title={selectedMedia.title} />
-            ) : (
-              <ImageFrame
-                src={selectedMedia.src}
-                alt={selectedMedia.title || ''}
-                username={selectedMedia.username || 'Unknown'}
-                createdAt={selectedMedia.created_at || ''}
-              />
-            )}
+const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaItem | null; onClose: () => void }) => {
+  const getImageSrc = (src: string) => {
+    if (src.includes('drive.google.com')) {
+      const fileId = src.match(/\/d\/(.+?)\/view/)?.[1];
+      return fileId ? `/api/file/${fileId}` : src;
+    }
+    return src;
+  };
+
+  return (
+    <AnimatePresence>
+      {selectedMedia && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+        >
+          <div className="w-full max-w-4xl relative">
+            <button
+              onClick={onClose}
+              className="absolute -top-10 right-0 text-green-500 hover:text-green-300 transition-colors duration-200 bg-black bg-opacity-50 rounded-full p-2"
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
+            <div className="w-full aspect-video">
+              {selectedMedia.type === 'video' ? (
+                <VideoPlayer src={getImageSrc(selectedMedia.src)} title={selectedMedia.title} />
+              ) : (
+                <div className="relative w-full h-full">
+                  <img
+                    src={getImageSrc(selectedMedia.src)}
+                    alt={selectedMedia.title || ''}
+                    className="w-full h-full object-contain"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-green-500 p-2">
+                    <p>Uploaded by: {selectedMedia.username || 'Unknown'}</p>
+                    <p>Uploaded on: {formatDate(selectedMedia.created_at)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-)
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export const LoadingAnimation = () => {
   const containerVariants = {
