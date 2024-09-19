@@ -10,6 +10,10 @@ const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com', 'drive.google.com'],
   },
+  serverRuntimeConfig: {
+    // Adicione isso para usar fs no servidor
+    fs: 'empty'
+  },
 }
 
 export default nextConfig;
