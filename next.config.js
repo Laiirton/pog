@@ -6,11 +6,6 @@ const nextConfig = {
     GOOGLE_DRIVE_REDIRECT_URI: process.env.GOOGLE_DRIVE_REDIRECT_URI,
     GOOGLE_DRIVE_REFRESH_TOKEN: process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
     GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID,
-    JWT_SECRET: process.env.JWT_SECRET,
-    ADMIN_USERNAME: process.env.ADMIN_USERNAME,
-    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   },
   images: {
     domains: ['lh3.googleusercontent.com', 'drive.google.com', 'localhost'],
@@ -23,6 +18,6 @@ const nextConfig = {
       },
     ],
   },
-};
+}
 
 export default nextConfig;
