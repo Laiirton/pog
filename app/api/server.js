@@ -223,21 +223,18 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     if (error) {
       console.error('Error saving to Supabase:', error);
-      if (error.code === '23502') {
-        return res.status(400).json({ error: 'Incomplete data. Please ensure all required fields are filled out.' });
-      }
       return res.status(500).json({ error: 'Error saving data to the database.' });
     }
 
-    // Remove temporary file if exists
-    if (req.file.path) {
-      fs.unlink(req.file.path, (err) => {
-        if (err) {
-          console.error('Error removing temporary file:', err);
-        } else {
-          console.log('Temporary file removed successfully');
-        }
-      });
+    // Incrementar a contagem de uploads do usuário
+    const { data: updatedUser, error: updateError } = await supabase
+      .rpc('increment_upload_count', { username_param: req.body.username })
+      .single();
+
+    if (updateError) {
+      console.error('Error updating upload count:', updateError);
+    } else {
+      console.log('Updated user:', updatedUser);
     }
 
     res.status(200).json({ fileId: file.data.id, supabaseData: data });
@@ -331,7 +328,7 @@ app.post('/register', async (req, res) => {
     // Inserir novo usuário com a senha criptografada
     const { data: newUser, error } = await supabase
       .from('usernames')
-      .insert({ username, password: hashedPassword })
+      .insert({ username, password: hashedPassword, upload_count: 0 })
       .select()
       .single();
 
@@ -375,6 +372,26 @@ app.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ error: 'An error occurred while logging in' });
+  }
+});
+
+// Adicione esta nova rota para obter o ranking
+app.get('/user-ranking', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('usernames')
+      .select('username, upload_count')
+      .order('upload_count', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+
+    console.log('User ranking data:', data); // Log para debug
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching user ranking:', error);
+    res.status(500).json({ error: 'An error occurred while fetching the user ranking' });
   }
 });
 
