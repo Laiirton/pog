@@ -36,8 +36,18 @@ app.use(bodyParser.json());
 
 // Rotas
 app.get('/api/media', async (req: Request, res: Response) => {
-  // Implementação da rota para buscar mídia
-  res.json({ message: 'Rota para buscar mídia' });
+  try {
+    const { data, error } = await supabase
+      .from('media')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching media:', error);
+    res.status(500).json({ error: 'Error fetching media' });
+  }
 });
 
 app.post('/api/upload', multer().single('file'), async (req: Request, res: Response) => {
@@ -50,7 +60,4 @@ app.delete('/api/delete-media/:id', async (req: Request, res: Response) => {
   res.json({ message: 'Rota de deleção' });
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+export default app;
