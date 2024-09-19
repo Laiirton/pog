@@ -39,9 +39,8 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       });
 
       const data = await response.json();
-
       if (response.ok) {
-        onLoginSuccess(username);
+        onLoginSuccess();
       } else {
         setError(data.error || 'Login failed');
       }
