@@ -6,15 +6,15 @@ export async function GET() {
     console.log('Starting GET request to /api/media');
     
     const oauth2Client = new google.auth.OAuth2(
-      process.env.CLIENT_ID,
-      process.env.CLIENT_SECRET,
-      process.env.REDIRECT_URI
+      process.env.GOOGLE_DRIVE_CLIENT_ID,
+      process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+      process.env.GOOGLE_DRIVE_REDIRECT_URI
     );
 
     console.log('OAuth2Client created');
 
     oauth2Client.setCredentials({
-      refresh_token: process.env.REFRESH_TOKEN
+      refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
     });
 
     console.log('Credentials set');
@@ -24,8 +24,8 @@ export async function GET() {
     console.log('Drive client created');
 
     const response = await drive.files.list({
-      q: `'${process.env.FOLDER_ID}' in parents and trashed = false`,
-      fields: 'files(id, name, mimeType, thumbnailLink, webViewLink)',
+      q: `'${process.env.GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed = false`,
+      fields: 'files(id, name, mimeType, thumbnailLink, webViewLink, createdTime)',
     });
 
     console.log('Drive API response received:', JSON.stringify(response.data, null, 2));
@@ -36,7 +36,7 @@ export async function GET() {
       type: file.mimeType?.startsWith('video/') ? 'video' : 'image',
       src: file.webViewLink,
       thumbnail: file.thumbnailLink,
-      created_at: new Date().toISOString()
+      created_at: file.createdTime
     })) || [];
 
     console.log('Processed files:', JSON.stringify(files, null, 2));
