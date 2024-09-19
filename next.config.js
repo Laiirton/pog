@@ -8,15 +8,7 @@ const nextConfig = {
     GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID,
   },
   images: {
-    domains: ['lh3.googleusercontent.com', 'drive.google.com', 'localhost'],
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/api/file/**',
-      },
-    ],
+    domains: ['lh3.googleusercontent.com', 'drive.google.com'],
   },
 }
 
