@@ -1,7 +1,7 @@
 'use client'
     
 import useSWR from 'swr'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, LogOut, Trash2 } from 'lucide-react'
 import { VideoPlayer } from './video-player'
@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase'
 import { MatrixRain } from './matrix-rain'
 import { useRouter } from 'next/navigation'
 import { AdminLogin } from './admin-login'
+import Image from 'next/image'
 
 const MEDIA_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://localhost:3001'
 
@@ -85,6 +86,9 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminToken, setAdminToken] = useState('')
   const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const [loadedThumbnails, setLoadedThumbnails] = useState<Set<string>>(new Set())
+
+  const observerRef = useRef<IntersectionObserver | null>(null)
 
   const handleUploadSuccess = useCallback(() => {
     mutate()
@@ -147,6 +151,28 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     if (storedToken) {
       setIsAdmin(true)
       setAdminToken(storedToken)
+    }
+  }, [])
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement
+            img.src = img.dataset.src || ''
+            setLoadedThumbnails((prev) => new Set(prev).add(img.dataset.src || ''))
+            observerRef.current?.unobserve(img)
+          }
+        })
+      },
+      { rootMargin: '100px' }
+    )
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
     }
   }, [])
 
@@ -233,6 +259,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
               item={item} 
               onClick={() => setSelectedMedia(item)} 
               onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
+              observerRef={observerRef}
+              isLoaded={loadedThumbnails.has(item.thumbnail)}
             />
           ))}
         </div>
@@ -246,45 +274,65 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   )
 }
 
-// Separate components for better organization
-const MediaItem = ({ item, onClick, onDelete }: { item: MediaItem; onClick: () => void; onDelete?: () => void }) => (
-  <motion.div
-    className="bg-black border-2 border-green-500 rounded-lg overflow-hidden shadow-lg hover:shadow-green-500/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-1 relative"
-    whileHover={{ scale: 1.05, borderColor: '#00FF00' }}
-    whileTap={{ scale: 0.95 }}
-    onClick={onClick}
-  >
-    <div className="relative aspect-video">
-      <img 
-        src={item.thumbnail} 
-        alt={item.title} 
-        className="w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-        <span className="text-green-500 text-lg font-bold glitch" data-text={item.type === 'video' ? 'View video' : 'View image'}>
-          {item.type === 'video' ? 'View video' : 'View image'}
-        </span>
+// Update MediaItem component to use lazy loading and caching
+const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: { 
+  item: MediaItem; 
+  onClick: () => void; 
+  onDelete?: () => void;
+  observerRef: React.RefObject<IntersectionObserver>;
+  isLoaded: boolean;
+}) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  return (
+    <motion.div
+      className="bg-black border-2 border-green-500 rounded-lg overflow-hidden shadow-lg hover:shadow-green-500/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-1 relative"
+      whileHover={{ scale: 1.05, borderColor: '#00FF00' }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+    >
+      <div className="relative aspect-video">
+        <Image
+          src={item.thumbnail}
+          alt={item.title}
+          layout="fill"
+          objectFit="cover"
+          className={`transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setImageLoaded(true)}
+          placeholder="blur"
+          blurDataURL="/placeholder.jpg"
+        />
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center">
+            <span className="text-green-500">Loading...</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+          <span className="text-green-500 text-lg font-bold glitch" data-text={item.type === 'video' ? 'View video' : 'View image'}>
+            {item.type === 'video' ? 'View video' : 'View image'}
+          </span>
+        </div>
       </div>
-    </div>
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-2 glitch" data-text={item.title}>{item.title}</h2>
-      {item.username && <p className="text-sm text-green-400">Uploaded by: {item.username}</p>}
-      <p className="text-xs text-green-300 mt-1">Uploaded on: {formatDate(item.created_at)}</p>
-    </div>
-    {onDelete && (
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onDelete()
-        }}
-        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors duration-300"
-        aria-label="Delete media"
-      >
-        <Trash2 size={16} />
-      </button>
-    )}
-  </motion.div>
-)
+      <div className="p-4">
+        <h2 className="text-xl font-bold mb-2 glitch" data-text={item.title}>{item.title}</h2>
+        {item.username && <p className="text-sm text-green-400">Uploaded by: {item.username}</p>}
+        <p className="text-xs text-green-300 mt-1">Uploaded on: {formatDate(item.created_at)}</p>
+      </div>
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors duration-300"
+          aria-label="Delete media"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
+    </motion.div>
+  )
+}
 
 const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaItem | null; onClose: () => void }) => (
   <AnimatePresence>
