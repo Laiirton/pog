@@ -29,8 +29,7 @@ export async function GET(
     headers.set('Content-Type', file.headers['content-type']);
     headers.set('Content-Disposition', `attachment; filename="${file.headers['content-disposition']}"`);
 
-    const readableStream = file.data as unknown as ReadableStream;
-    return new NextResponse(readableStream, { headers });
+    return new NextResponse(file.data, { headers });
   } catch (error) {
     console.error('Error fetching file:', error);
     return NextResponse.json({ error: 'Error fetching file' }, { status: 500 });
