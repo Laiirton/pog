@@ -58,6 +58,10 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       const username = localStorage.getItem('username')
       if (username) {
         formData.append('username', username)
+      } else {
+        setUploadError('User not authenticated')
+        setIsUploading(false)
+        return
       }
 
       try {
@@ -66,12 +70,12 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
           body: formData,
         })
 
+        const result = await response.json()
+
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Upload failed')
+          throw new Error(result.error || 'Upload failed')
         }
 
-        const result = await response.json()
         console.log('File uploaded successfully:', result)
         
         setFile(null)
