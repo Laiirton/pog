@@ -11,13 +11,15 @@ import { format } from "date-fns"
 
 interface FilterComponentsProps {
   selectedType: string;
-  setSelectedType: (type: string) => void;
+  setSelectedType: React.Dispatch<React.SetStateAction<string>>;
   selectedUser: string;
-  setSelectedUser: (user: string) => void;
-  title: string;
-  setTitle: (title: string) => void;
-  date: Date | undefined;
-  setDate: (date: Date | undefined) => void;
+  setSelectedUser: React.Dispatch<React.SetStateAction<string>>;
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  startDate: Date | null;
+  setStartDate: React.Dispatch<React.SetStateAction<Date | null>>;
+  endDate: Date | null;
+  setEndDate: React.Dispatch<React.SetStateAction<Date | null>>;
   allUsers: string[];
 }
 
