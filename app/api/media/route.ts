@@ -1,62 +1,55 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
-import fs from 'fs';
+import { OAuth2Client } from 'google-auth-library';
 
-const SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly'];
-const TOKEN_PATH = 'token.json';
-const CREDENTIALS_PATH = 'credentials.json';
+const oauth2Client = new OAuth2Client(
+  process.env.GOOGLE_DRIVE_CLIENT_ID,
+  process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+  process.env.GOOGLE_DRIVE_REDIRECT_URI
+);
+
+oauth2Client.setCredentials({
+  refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
+});
+
+const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 export async function GET() {
   try {
-    console.log('Starting GET request to /api/media');
+    console.log('Iniciando busca de arquivos no Google Drive');
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    console.log('Folder ID:', folderId);
 
-    const auth = await authorize();
-    const files = await listFiles(auth);
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/')`,
+      fields: 'files(id, name, mimeType, createdTime, thumbnailLink)',
+    });
 
-    console.log('Processed files:', JSON.stringify(files, null, 2));
+    console.log('Resposta da API do Google Drive:', response.data);
 
-    return NextResponse.json(files);
-  } catch (error: unknown) {
-    console.error('Error fetching media:', error);
-    if (error instanceof Error) {
-      return NextResponse.json({ error: 'Error fetching media', details: error.message }, { status: 500 });
-    } else {
-      return NextResponse.json({ error: 'Error fetching media', details: 'An unknown error occurred' }, { status: 500 });
+    const files = response.data.files;
+    if (!files || files.length === 0) {
+      console.log('Nenhum arquivo encontrado');
+      return NextResponse.json({ message: 'No files found.' }, { status: 404 });
     }
+
+    const mediaItems = files.map(file => ({
+      id: file.id,
+      title: file.name,
+      type: file.mimeType?.includes('video') ? 'video' : 'image',
+      src: `https://drive.google.com/uc?export=view&id=${file.id}`,
+      thumbnail: file.thumbnailLink || `https://drive.google.com/thumbnail?id=${file.id}`,
+      created_at: file.createdTime,
+    }));
+
+    console.log('Media items processados:', mediaItems);
+
+    return NextResponse.json(mediaItems);
+  } catch (error) {
+    console.error('Erro detalhado ao buscar mídia do Google Drive:', error);
+    if (error.response) {
+      console.error('Resposta de erro:', error.response.data);
+    }
+    return NextResponse.json({ error: 'Error fetching media', details: error.message }, { status: 500 });
   }
-}
-
-async function authorize() {
-  const content = await fs.promises.readFile(CREDENTIALS_PATH, 'utf8');
-  const credentials = JSON.parse(content);
-  const { client_secret, client_id, redirect_uris } = credentials.web;
-  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-
-  try {
-    const token = await fs.promises.readFile(TOKEN_PATH, 'utf8');
-    oAuth2Client.setCredentials(JSON.parse(token));
-  } catch (err) {
-    throw new Error('Token not found. Please run the authentication script separately.');
-  }
-
-  return oAuth2Client;
-}
-
-async function listFiles(auth: any) {
-  const drive = google.drive({ version: 'v3', auth });
-  const res = await drive.files.list({
-    q: `'${process.env.GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed = false`,
-    fields: 'files(id, name, mimeType, thumbnailLink, webViewLink, createdTime)',
-  });
-
-  const files = res.data.files?.map(file => ({
-    id: file.id,
-    title: file.name,
-    type: file.mimeType?.startsWith('video/') ? 'video' : 'image',
-    src: file.webViewLink,
-    thumbnail: file.thumbnailLink,
-    created_at: file.createdTime
-  })) || [];
-
-  return files;
 }
