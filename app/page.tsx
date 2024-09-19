@@ -11,7 +11,6 @@ export default function Home() {
 
   useEffect(() => {
     const checkUser = () => {
-      setIsLoading(true);
       const storedUsername = localStorage.getItem('username');
       setIsAuthenticated(!!storedUsername);
       setIsLoading(false);
@@ -20,7 +19,8 @@ export default function Home() {
     checkUser();
   }, []);
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (username: string) => {
+    localStorage.setItem('username', username);
     setIsAuthenticated(true);
   };
 
