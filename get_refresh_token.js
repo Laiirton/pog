@@ -5,12 +5,12 @@ import open from 'open';
 import destroyer from 'server-destroy';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: '.env.local' });
 
 const oauth2Client = new google.auth.OAuth2(
-  process.env.CLIENT_ID,
-  process.env.CLIENT_SECRET,
-  process.env.REDIRECT_URI
+  process.env.GOOGLE_DRIVE_CLIENT_ID,
+  process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+  process.env.GOOGLE_DRIVE_REDIRECT_URI
 );
 
 const scopes = [
@@ -22,7 +22,7 @@ async function getRefreshToken() {
     const authorizeUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes.join(' '),
-      prompt: 'consent'  // Add this line
+      prompt: 'consent'
     });
 
     const server = http
@@ -53,4 +53,9 @@ async function getRefreshToken() {
   });
 }
 
-getRefreshToken();
+getRefreshToken().then((refreshToken) => {
+  console.log('Add this refresh token to your .env.local file:');
+  console.log(`GOOGLE_DRIVE_REFRESH_TOKEN=${refreshToken}`);
+}).catch((error) => {
+  console.error('Error getting refresh token:', error);
+});
