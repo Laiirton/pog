@@ -94,8 +94,12 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4 text-green-500">
           <h2 className="text-xl font-bold mb-2 text-green-400 truncate">{alt}</h2>
-          <p className="text-sm text-green-300">Uploaded by: <span className="text-green-400">{username}</span></p>
-          <p className="text-xs mt-1 text-green-300">Uploaded on: <span className="text-green-400">{new Date(createdAt).toLocaleString()}</span></p>
+          <p className="text-sm text-green-300">
+            Uploaded by: <span className="text-green-400 font-bold">{username || 'Unknown'}</span>
+          </p>
+          <p className="text-xs mt-1 text-green-300">
+            Uploaded on: <span className="text-green-400">{new Date(createdAt).toLocaleString()}</span>
+          </p>
           <button
             onClick={handleDownload}
             className="mt-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-black font-bold py-2 px-4 rounded transition-all duration-300 flex items-center"
