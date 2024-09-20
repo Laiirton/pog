@@ -9,22 +9,25 @@ import path from 'path';
 import os from 'os';
 import jwt from 'jsonwebtoken';
 
+// Imprime variáveis de ambiente para debug
 console.log('GOOGLE_DRIVE_CLIENT_ID:', process.env.GOOGLE_DRIVE_CLIENT_ID);
 console.log('GOOGLE_DRIVE_REDIRECT_URI:', process.env.GOOGLE_DRIVE_REDIRECT_URI);
 console.log('GOOGLE_DRIVE_FOLDER_ID:', process.env.GOOGLE_DRIVE_FOLDER_ID);
 console.log('GOOGLE_DRIVE_REFRESH_TOKEN:', process.env.GOOGLE_DRIVE_REFRESH_TOKEN);
 
+// Configura o cliente OAuth2 para autenticação com o Google Drive
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
   process.env.GOOGLE_DRIVE_CLIENT_SECRET,
   process.env.GOOGLE_DRIVE_REDIRECT_URI
 );
 
-// Set the refresh token immediately after creating the client
+// Define as credenciais do cliente OAuth2 com o refresh token
 oauth2Client.setCredentials({
   refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
 });
 
+// Define os escopos necessários para a API do Google Drive
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/drive.file',
@@ -32,6 +35,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive.appfolder'
 ];
 
+// Função para atualizar o token de acesso
 async function refreshToken() {
   try {
     const { credentials } = await oauth2Client.refreshAccessToken();
@@ -43,7 +47,7 @@ async function refreshToken() {
   }
 }
 
-// Ensure the token has the correct scopes
+// Função para garantir que o token seja válido e tenha os escopos corretos
 async function ensureValidToken() {
   try {
     const { expiry_date, scope } = oauth2Client.credentials;
@@ -62,13 +66,16 @@ async function ensureValidToken() {
   }
 }
 
+// Inicializa o cliente do Google Drive
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+// Inicializa o cliente do Supabase
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Função para fazer upload de arquivo para o Google Drive
 async function uploadFile(filePath: string, fileName: string, mimeType: string) {
   try {
     await ensureValidToken();
@@ -94,8 +101,10 @@ async function uploadFile(filePath: string, fileName: string, mimeType: string) 
   }
 }
 
+// Função principal para lidar com a requisição POST
 export async function POST(request: NextRequest) {
   try {
+    // Extrai os dados do formulário
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const name = formData.get('name') as string;
@@ -105,16 +114,19 @@ export async function POST(request: NextRequest) {
     console.log('Name:', name);
     console.log('Username:', formUsername);
 
+    // Verifica se todos os campos necessários estão presentes
     if (!file || !name || !formUsername) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Verifica o token de autenticação
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
     }
     const token = authHeader.split(' ')[1];
 
+    // Decodifica o token JWT para obter o username
     let username: string;
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { username?: string, sid?: string };
@@ -141,18 +153,22 @@ export async function POST(request: NextRequest) {
 
     console.log('Decoded username:', username);
 
+    // Salva o arquivo temporariamente
     const tempFilePath = path.join(os.tmpdir(), file.name);
     const buffer = await file.arrayBuffer();
     await fs.promises.writeFile(tempFilePath, Buffer.from(buffer));
     console.log('Arquivo temporário salvo:', tempFilePath);
 
+    // Faz o upload do arquivo para o Google Drive
     console.log('Iniciando processo de upload');
     const uploadedFile = await uploadFile(tempFilePath, name, file.type);
     console.log('Arquivo enviado para o Google Drive:', uploadedFile);
 
+    // Remove o arquivo temporário
     await fs.promises.unlink(tempFilePath);
     console.log('Arquivo temporário removido');
 
+    // Salva os metadados do arquivo no Supabase
     console.log('Saving metadata to Supabase...');
     const currentTimestamp = new Date().toISOString();
     const { data, error } = await supabase
@@ -176,6 +192,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Metadata saved successfully:', data);
 
+    // Atualiza o contador de uploads do usuário
     console.log('Updating upload count...');
     const { error: updateError } = await supabase.rpc('increment_upload_count', { username_param: username });
 
@@ -185,6 +202,7 @@ export async function POST(request: NextRequest) {
       console.log('Upload count updated successfully');
     }
 
+    // Retorna uma resposta de sucesso
     return NextResponse.json({ 
       message: 'File uploaded and metadata saved successfully', 
       fileId: uploadedFile.id, 
@@ -193,6 +211,7 @@ export async function POST(request: NextRequest) {
       uploadedAt: currentTimestamp
     });
   } catch (error) {
+    // Trata erros gerais
     console.error('Error in upload process:', error);
     if (error instanceof Error) {
       console.error('Error message:', error.message);
