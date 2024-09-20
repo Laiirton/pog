@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { useState, useCallback } from 'react';
 
 export function useImagePreloader() {
