@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon, Search } from "lucide-react"
+import { CalendarIcon, X } from "lucide-react"
 import { format } from "date-fns"
 
 interface FilterComponentsProps {
