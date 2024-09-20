@@ -118,13 +118,10 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     setShowUpload(false);
   }, [mutate]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('username');
-    localStorage.removeItem('adminToken');
-    setIsAdmin(false);
-    setAdminToken('');
     onLogout();
-  };
+  }, [onLogout]);
 
   const handleAdminLogin = async (username: string, password: string) => {
     try {
