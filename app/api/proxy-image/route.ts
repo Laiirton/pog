@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
+import { Readable } from 'stream';
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -35,7 +36,17 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return new NextResponse(response.data, { headers });
+    // Convert the Readable stream to a ReadableStream
+    const readable = response.data as Readable;
+    const stream = new ReadableStream({
+      start(controller) {
+        readable.on('data', (chunk) => controller.enqueue(chunk));
+        readable.on('end', () => controller.close());
+        readable.on('error', (err) => controller.error(err));
+      },
+    });
+
+    return new NextResponse(stream, { headers });
   } catch (error) {
     console.error('Error fetching image:', error);
     return new NextResponse('Error fetching image', { status: 500 });

@@ -7,6 +7,9 @@ const nextConfig = {
     GOOGLE_DRIVE_REFRESH_TOKEN: process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
     GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID,
   },
+  images: {
+    domains: ['drive.google.com', 'lh3.googleusercontent.com'],
+  },
 }
 
 export default nextConfig;
