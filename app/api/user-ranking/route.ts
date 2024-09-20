@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const { data, error } = await supabase
       .from('usernames')
