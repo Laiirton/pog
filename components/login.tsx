@@ -89,10 +89,10 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       <Button type="submit" disabled={isLoading} className="w-full flex items-center justify-center">
         {isLoading ? 'Logging in...' : 'Login'}
       </Button>
-      <p className="mt-4 text-center text-green-300">
-        Don't have an account?{' '}
-        <button type="button" onClick={onSwitchToRegister} className="underline">
-          Register
+      <p className="text-sm text-green-400 mt-2">
+        Don&apos;t have an account?{' '}
+        <button onClick={onSwitchToRegister} className="text-blue-400 hover:underline">
+          Register here
         </button>
       </p>
     </motion.form>
