@@ -3,12 +3,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { Readable } from 'stream';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import jwt from 'jsonwebtoken';
+
+console.log('GOOGLE_DRIVE_CLIENT_ID:', process.env.GOOGLE_DRIVE_CLIENT_ID);
+console.log('GOOGLE_DRIVE_REDIRECT_URI:', process.env.GOOGLE_DRIVE_REDIRECT_URI);
+console.log('GOOGLE_DRIVE_FOLDER_ID:', process.env.GOOGLE_DRIVE_FOLDER_ID);
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -18,26 +21,33 @@ const oauth2Client = new OAuth2Client(
 
 oauth2Client.on('tokens', (tokens) => {
   if (tokens.refresh_token) {
-    // Armazene o novo refresh_token (você pode querer implementar uma forma de salvar isso de maneira segura)
     console.log('Novo refresh token:', tokens.refresh_token);
   }
   console.log('Access token atualizado');
 });
 
-oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
-});
-
-// Definir o escopo corretamente
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive.appdata',
-  'https://www.googleapis.com/auth/drive.apps.readonly'
+  'https://www.googleapis.com/auth/drive.appfolder'
 ];
 
-// Remova esta linha, pois não é necessária e causa o erro do linter
-// oauth2Client.scope = SCOPES.join(' ');
+oauth2Client.setCredentials({
+  refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
+});
+
+async function ensureValidToken() {
+  try {
+    console.log('Obtendo token válido...');
+    const tokenResponse = await oauth2Client.getAccessToken();
+    oauth2Client.setCredentials(tokenResponse?.token ? { access_token: tokenResponse.token } : {});
+    console.log('Token válido obtido');
+  } catch (error) {
+    console.error('Erro ao obter token válido:', error);
+    throw error;
+  }
+}
 
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
@@ -45,17 +55,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-async function ensureValidToken() {
-  try {
-    const { credentials } = await oauth2Client.refreshAccessToken();
-    oauth2Client.setCredentials(credentials);
-    console.log('Token atualizado com sucesso');
-  } catch (error) {
-    console.error('Erro ao atualizar o token:', error);
-    throw error;
-  }
-}
 
 async function uploadFile(filePath: string, fileName: string, mimeType: string) {
   try {
@@ -81,7 +80,7 @@ async function uploadFile(filePath: string, fileName: string, mimeType: string) 
     if (error instanceof Error && 'response' in error) {
       const errorWithResponse = error as { response?: { data: unknown } };
       if (errorWithResponse.response) {
-        console.error('Google Drive API error:', errorWithResponse.response.data);
+        console.error('Google Drive API error:', JSON.stringify(errorWithResponse.response.data, null, 2));
       }
     }
     throw error;
@@ -93,7 +92,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const name = formData.get('name') as string;
-    const formUsername = formData.get('username') as string; // Renamed to formUsername
+    const formUsername = formData.get('username') as string;
 
     console.log('Received file:', file.name, 'Size:', file.size);
     console.log('Name:', name);
@@ -103,21 +102,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Obter o token do cabeçalho da requisição
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
     }
     const token = authHeader.split(' ')[1];
 
-    // Decodificar o token JWT
     let username: string;
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { username?: string, sid?: string };
       if (decoded.username) {
         username = decoded.username;
       } else if (decoded.sid) {
-        // Se não houver username, mas houver sid, busque o username no Supabase
         const { data, error } = await supabase
           .from('usernames')
           .select('username')
@@ -168,13 +164,6 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error saving to Supabase:', error);
-      // Tente obter mais detalhes sobre o erro
-      if (error.details) {
-        console.error('Error details:', error.details);
-      }
-      if (error.hint) {
-        console.error('Error hint:', error.hint);
-      }
       return NextResponse.json({ error: 'Error saving file metadata', details: error }, { status: 500 });
     }
 
@@ -185,13 +174,6 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Error updating upload count:', updateError);
-      // Log mais detalhes sobre o erro, se disponíveis
-      if (updateError.details) {
-        console.error('Update error details:', updateError.details);
-      }
-      if (updateError.hint) {
-        console.error('Update error hint:', updateError.hint);
-      }
     } else {
       console.log('Upload count updated successfully');
     }
@@ -200,8 +182,8 @@ export async function POST(request: NextRequest) {
       message: 'File uploaded and metadata saved successfully', 
       fileId: uploadedFile.id, 
       webViewLink: uploadedFile.webViewLink,
-      username: username, // Adicionando o nome de usuário à resposta
-      uploadedAt: currentTimestamp // Adicionando a data e hora do upload à resposta
+      username: username,
+      uploadedAt: currentTimestamp
     });
   } catch (error) {
     console.error('Error in upload process:', error);
