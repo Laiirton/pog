@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
-import Image from 'next/legacy/image'
+import Image from 'next/image'
 
 interface ImageFrameProps {
   src: string
