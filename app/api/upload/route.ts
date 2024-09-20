@@ -43,10 +43,17 @@ async function refreshToken() {
   }
 }
 
+// Ensure the token has the correct scopes
 async function ensureValidToken() {
   try {
-    const { expiry_date } = oauth2Client.credentials;
-    if (!expiry_date || expiry_date < Date.now() + 60000) {
+    const { expiry_date, scope } = oauth2Client.credentials;
+    const requiredScopes = SCOPES.join(' ');
+
+    if (!scope || !scope.includes(requiredScopes)) {
+      console.log('Current token scopes:', scope);
+      console.log('Required scopes:', requiredScopes);
+      await refreshToken();
+    } else if (!expiry_date || expiry_date < Date.now() + 60000) {
       await refreshToken();
     }
   } catch (error) {
