@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 import { LoadingAnimation } from './loading-animation'
 import { useImagePreloader } from '../hooks/useImagePreloader';
-import { ImageFrameWithRGB } from './image-frame-with-rgb';
 
 const fetcher = async (url: string) => {
   const response = await fetch(url);
@@ -400,7 +399,7 @@ const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { select
               {selectedMedia.type === 'video' ? (
                 <VideoPlayer src={getImageSrc(selectedMedia.src)} title={selectedMedia.title} />
               ) : (
-                <ImageFrameWithRGB
+                <ImageFrame
                   src={getImageSrc(selectedMedia.src)}
                   alt={selectedMedia.title || ''}
                   username={selectedMedia.username || 'Unknown'}
