@@ -57,7 +57,8 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       formData.append('name', fileName)
 
       const username = localStorage.getItem('username')
-      if (!username) {
+      const token = localStorage.getItem('token') // Obter o token do localStorage
+      if (!username || !token) {
         setUploadError('User not authenticated')
         setIsUploading(false)
         return
@@ -67,6 +68,9 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       try {
         const response = await fetch('/api/upload', {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}` // Adicionar o token ao cabeçalho
+          },
           body: formData,
         })
 
