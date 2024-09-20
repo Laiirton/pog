@@ -31,7 +31,7 @@ interface MediaItem {
   type: 'video' | 'image';
   src: string;
   thumbnail: string;
-  username?: string;
+  username: string;
   created_at: string;
 }
 
@@ -306,14 +306,15 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const fullImageSrc = getImageSrc(item.src);
-  const cachedImage = getCachedImage(fullImageSrc);
+  const thumbnailSrc = item.thumbnail.startsWith('http') 
+    ? item.thumbnail 
+    : `/api/proxy-image?id=${item.id}`;
 
   useEffect(() => {
-    if (isHovered && !imageLoaded && !cachedImage) {
-      preloadImage(fullImageSrc).then(() => setImageLoaded(true)).catch(() => setImageError(true));
+    if (isHovered && !imageLoaded) {
+      preloadImage(thumbnailSrc).then(() => setImageLoaded(true)).catch(() => setImageError(true));
     }
-  }, [isHovered, imageLoaded, fullImageSrc, cachedImage, preloadImage]);
+  }, [isHovered, imageLoaded, thumbnailSrc, preloadImage]);
 
   return (
     <motion.div
@@ -327,15 +328,14 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
       <div className="relative aspect-video">
         {!imageError ? (
           <Image
-            src={item.thumbnail}
+            src={thumbnailSrc}
             alt={item.title}
             layout="fill"
             objectFit="cover"
             className={`transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
-            placeholder="blur"
-            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 bg-black flex items-center justify-center">
@@ -355,8 +355,12 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
       </div>
       <div className="p-4">
         <h2 className="text-xl font-bold mb-2 glitch" data-text={item.title}>{item.title}</h2>
-        {item.username && <p className="text-sm text-green-400">Uploaded by: {item.username}</p>}
-        <p className="text-xs text-green-300 mt-1">Uploaded on: {formatDate(item.created_at)}</p>
+        <p className="text-sm text-green-400 mb-1">
+          Uploaded by: <span className="font-bold">{item.username || 'Unknown'}</span>
+        </p>
+        <p className="text-xs text-green-300">
+          Uploaded on: {formatDate(item.created_at)}
+        </p>
       </div>
       {onDelete && (
         <button
