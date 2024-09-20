@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import React, { forwardRef } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 
@@ -9,13 +9,12 @@ import { buttonVariants } from "@/components/ui/button"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
-const Calendar = React.forwardRef<
+const Calendar = forwardRef<
   React.ElementRef<typeof DayPicker>,
-  React.ComponentPropsWithoutRef<typeof DayPicker>
+  CalendarProps
 >(({ className, classNames, showOutsideDays = true, ...props }, ref) => {
   return (
     <DayPicker
-      ref={ref}
       showOutsideDays={showOutsideDays}
       className={cn("p-3 bg-black text-green-500", className)}
       classNames={{
