@@ -2,7 +2,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-
 export const LoadingAnimation: React.FC = () => {
   const containerVariants = {
     start: {
