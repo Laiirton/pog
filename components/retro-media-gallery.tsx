@@ -1,14 +1,13 @@
 'use client'
     
 import useSWR from 'swr'
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, LogOut, Trash2, Upload, User } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
 import { MatrixRain } from './matrix-rain'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
@@ -65,7 +64,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminToken, setAdminToken] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [loadedThumbnails, setLoadedThumbnails] = useState<Set<string>>(new Set());
   const [selectedType, setSelectedType] = useState('all');
   const [selectedUser, setSelectedUser] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
