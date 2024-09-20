@@ -30,23 +30,17 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
   const cachedImage = getCachedImage(fullImageSrc);
 
   useEffect(() => {
-    if (!preloaded && !cachedImage) {
-      const preloadImage = new window.Image();
-      preloadImage.src = fullImageSrc;
-      preloadImage.onload = () => {
-        setCurrentSrc(fullImageSrc);
-        setIsLoading(false);
-      };
-      preloadImage.onerror = () => {
-        console.error('Error loading full image:', fullImageSrc);
+    if (!preloaded) {
+      const img = new Image();
+      img.src = getImageSrc(src);
+      img.onload = () => setIsLoading(false);
+      img.onerror = () => {
+        console.error('Error loading image:', src);
         setImageError(true);
         setIsLoading(false);
       };
-    } else if (cachedImage) {
-      setCurrentSrc(cachedImage);
-      setIsLoading(false);
     }
-  }, [fullImageSrc, preloaded, cachedImage]);
+  }, [src, preloaded]);
 
   const handleDownload = async () => {
     try {
@@ -82,7 +76,7 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
           )}
           {!imageError ? (
             <Image
-              src={currentSrc}
+              src={getImageSrc(src)}
               alt={alt}
               layout="fill"
               objectFit="contain"
