@@ -2,45 +2,54 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 
 interface ImageFrameProps {
   src: string
   alt: string
   username: string
   createdAt: string
-  thumbnail: string // Adicionando thumbnail como prop
+  thumbnail: string
   preloaded?: boolean
-  getCachedImage: (src: string) => string | null;
+  getCachedImage: (src: string) => string | null
 }
 
-const getImageSrc = (src: string) => {
+const getImageSrc = (src: string): string => {
   if (src.includes('drive.google.com')) {
-    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1];
-    return fileId ? `/api/file/${fileId}` : src;
+    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1]
+    return fileId ? `/api/file/${fileId}` : src
   }
-  return src;
-};
+  return src
+}
 
 export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded = false, getCachedImage }: ImageFrameProps) {
-  const [isLoading, setIsLoading] = useState(!preloaded);
-  const [imageError, setImageError] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState(preloaded ? src : thumbnail);
-  const fullImageSrc = getImageSrc(src);
-  const cachedImage = getCachedImage(fullImageSrc);
+  const [isLoading, setIsLoading] = useState(!preloaded)
+  const [imageError, setImageError] = useState(false)
+  const fullImageSrc = getImageSrc(src)
+  const cachedImage = getCachedImage(fullImageSrc)
 
   useEffect(() => {
-    if (!preloaded) {
-      const img = new Image();
-      img.src = getImageSrc(src);
-      img.onload = () => setIsLoading(false);
-      img.onerror = () => {
-        console.error('Error loading image:', src);
-        setImageError(true);
-        setIsLoading(false);
-      };
+    if (!preloaded && !cachedImage) {
+      const img = document.createElement('img')
+      img.src = fullImageSrc
+      const handleLoad = () => setIsLoading(false)
+      const handleError = () => {
+        console.error('Error loading image:', fullImageSrc)
+        setImageError(true)
+        setIsLoading(false)
+      }
+
+      img.addEventListener('load', handleLoad)
+      img.addEventListener('error', handleError)
+
+      return () => {
+        img.removeEventListener('load', handleLoad)
+        img.removeEventListener('error', handleError)
+      }
+    } else if (cachedImage) {
+      setIsLoading(false)
     }
-  }, [src, preloaded]);
+  }, [fullImageSrc, preloaded, cachedImage])
 
   const handleDownload = async () => {
     try {
@@ -76,7 +85,7 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
           )}
           {!imageError ? (
             <Image
-              src={getImageSrc(src)}
+              src={cachedImage || fullImageSrc}
               alt={alt}
               layout="fill"
               objectFit="contain"
