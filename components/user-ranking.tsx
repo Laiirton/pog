@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Upload } from 'lucide-react';
+
 
 interface RankingItem {
   username: string;
