@@ -7,6 +7,7 @@ import { Play, Pause, Volume2, VolumeX, Maximize, Rewind, FastForward, Download 
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 
+// Interface que define as propriedades do componente VideoPlayer
 interface VideoPlayerProps {
   src: string
   title: string
@@ -28,6 +29,7 @@ export function VideoPlayer({
   showFullscreenButton = true,
   showSkipButtons = true
 }: VideoPlayerProps) {
+  // Estados para controlar o player de vídeo
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(1)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
@@ -36,10 +38,13 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [showControls, setShowControls] = useState(true)
+  
+  // Referências para elementos do DOM
   const videoRef = useRef<HTMLVideoElement>(null)
   const volumeSliderRef = useRef<HTMLDivElement>(null)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Função para alternar entre play e pause
   const togglePlay = useCallback(() => {
     if (videoRef.current) {
       if (isPlaying) {
@@ -51,6 +56,7 @@ export function VideoPlayer({
     }
   }, [isPlaying])
 
+  // Função para alterar o volume
   const handleVolumeChange = useCallback((newVolume: number[]) => {
     if (videoRef.current) {
       videoRef.current.volume = newVolume[0]
@@ -58,10 +64,12 @@ export function VideoPlayer({
     }
   }, [])
 
+  // Função para mostrar/esconder o slider de volume
   const toggleVolumeSlider = useCallback(() => {
     setShowVolumeSlider(prev => !prev)
   }, [])
 
+  // Função para atualizar o progresso do vídeo
   const handleProgress = useCallback(() => {
     if (videoRef.current) {
       const currentProgress = (videoRef.current.currentTime / videoRef.current.duration) * 100
@@ -70,6 +78,7 @@ export function VideoPlayer({
     }
   }, [])
 
+  // Função para buscar uma posição específica no vídeo
   const handleSeek = useCallback((newProgress: number[]) => {
     if (videoRef.current && videoRef.current.duration) {
       const time = (newProgress[0] / 100) * videoRef.current.duration
@@ -79,6 +88,7 @@ export function VideoPlayer({
     }
   }, [])
 
+  // Função para alternar o modo tela cheia
   const handleFullscreen = useCallback(() => {
     if (videoRef.current) {
       if (document.fullscreenElement) {
@@ -89,18 +99,21 @@ export function VideoPlayer({
     }
   }, [])
 
+  // Função para avançar ou retroceder o vídeo
   const handleSkip = useCallback((seconds: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime += seconds
     }
   }, [])
 
+  // Função para formatar o tempo em minutos:segundos
   const formatTime = useCallback((time: number) => {
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
   }, [])
 
+  // Função para mostrar os controles temporariamente
   const showControlsTemporarily = useCallback(() => {
     setShowControls(true)
     if (controlsTimeoutRef.current) {
@@ -111,6 +124,7 @@ export function VideoPlayer({
     }, 3000)
   }, [])
 
+  // Função para baixar o vídeo
   const handleDownload = useCallback(async () => {
     try {
       const response = await fetch(src)
@@ -128,6 +142,7 @@ export function VideoPlayer({
     }
   }, [src, title])
 
+  // Função para lidar com o carregamento dos metadados do vídeo
   const handleLoadedMetadata = useCallback(() => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration)
@@ -135,6 +150,7 @@ export function VideoPlayer({
     }
   }, [])
 
+  // Efeito para adicionar event listeners ao vídeo
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
@@ -152,6 +168,7 @@ export function VideoPlayer({
     }
   }, [handleLoadedMetadata])
 
+  // Efeito para fechar o slider de volume ao clicar fora dele
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (volumeSliderRef.current && !volumeSliderRef.current.contains(event.target as Node)) {
@@ -169,11 +186,13 @@ export function VideoPlayer({
       onMouseLeave={() => setShowControls(false)}
       style={{ '--primary-color': primaryColor, '--secondary-color': secondaryColor, '--accent-color': accentColor } as React.CSSProperties}
     >
+      {/* Indicador de carregamento */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[var(--primary-color)]"></div>
         </div>
       )}
+      {/* Container do vídeo */}
       <div className="aspect-video max-h-[80vh] flex items-center justify-center">
         <video
           ref={videoRef}
@@ -184,9 +203,11 @@ export function VideoPlayer({
           onClick={togglePlay}
         />
       </div>
+      {/* Controles do player */}
       <div className={`absolute inset-0 bg-gradient-to-t from-black to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4">
           <div className="flex flex-col space-y-2">
+            {/* Barra de progresso */}
             <Slider
               className="w-full [&>span:first-child]:bg-[var(--primary-color)] [&_[role=slider]]:bg-[var(--primary-color)]"
               value={[progress]}
@@ -196,6 +217,7 @@ export function VideoPlayer({
               aria-label="Video progress"
             />
             <div className="flex items-center justify-between space-x-4">
+              {/* Botões de controle */}
               <div className="flex items-center space-x-2">
                 {showSkipButtons && (
                   <Button 
@@ -240,9 +262,11 @@ export function VideoPlayer({
                   </Button>
                 )}
               </div>
+              {/* Exibição do tempo atual e duração total */}
               <div className="text-[var(--primary-color)] text-sm">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </div>
+              {/* Controles de volume e tela cheia */}
               <div className="flex items-center space-x-2">
                 <div className="relative" ref={volumeSliderRef}>
                   <Button
@@ -254,6 +278,7 @@ export function VideoPlayer({
                   >
                     {volume === 0 ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
                   </Button>
+                  {/* Slider de volume */}
                   {showVolumeSlider && (
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black bg-opacity-75 p-2 rounded-md">
                       <div className="flex items-center">
