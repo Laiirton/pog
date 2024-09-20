@@ -77,9 +77,12 @@ async function uploadFile(filePath: string, fileName: string, mimeType: string) 
     console.log('Arquivo enviado com sucesso:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Erro detalhado ao fazer upload do arquivo:', error as any);
-    if ((error as any).response && (error as any).response.data && (error as any).response.data.error) {
-      console.error('Google Drive API error:', (error as any).response.data.error);
+    console.error('Erro detalhado ao fazer upload do arquivo:', error);
+    if (error instanceof Error && 'response' in error) {
+      const errorWithResponse = error as { response?: { data: unknown } };
+      if (errorWithResponse.response) {
+        console.error('Google Drive API error:', errorWithResponse.response.data);
+      }
     }
     throw error;
   }
@@ -179,11 +182,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in upload process:', error);
-    // Tente obter mais detalhes sobre o erro
     if (error instanceof Error) {
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
     }
-    return NextResponse.json({ error: 'Error in upload process', details: JSON.stringify(error, Object.getOwnPropertyNames(error)) }, { status: 500 });
+    return NextResponse.json({ error: 'Error in upload process', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
