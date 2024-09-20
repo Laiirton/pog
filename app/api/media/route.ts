@@ -45,11 +45,17 @@ export async function GET() {
     console.log('Media items processados:', mediaItems);
 
     return NextResponse.json(mediaItems);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erro detalhado ao buscar mídia do Google Drive:', error);
-    if (error.response) {
-      console.error('Resposta de erro:', error.response.data);
+    if (error instanceof Error && 'response' in error) {
+      const errorWithResponse = error as { response?: { data: unknown } };
+      if (errorWithResponse.response) {
+        console.error('Resposta de erro:', errorWithResponse.response.data);
+      }
     }
-    return NextResponse.json({ error: 'Error fetching media', details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error fetching media', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }
