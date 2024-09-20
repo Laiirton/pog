@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Inserir novo usuário
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('usernames')
       .insert([
         { username, password: hashedPassword, upload_count: 0 }
