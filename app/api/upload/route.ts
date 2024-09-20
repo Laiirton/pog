@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import jwt from 'jsonwebtoken';
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -74,9 +75,9 @@ async function uploadFile(filePath: string, fileName: string, mimeType: string) 
     console.log('Arquivo enviado com sucesso:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Erro detalhado ao fazer upload do arquivo:', error);
-    if (error.response && error.response.data && error.response.data.error) {
-      console.error('Google Drive API error:', error.response.data.error);
+    console.error('Erro detalhado ao fazer upload do arquivo:', error as any);
+    if ((error as any).response && (error as any).response.data && (error as any).response.data.error) {
+      console.error('Google Drive API error:', (error as any).response.data.error);
     }
     throw error;
   }
@@ -87,15 +88,27 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const name = formData.get('name') as string;
-    const username = formData.get('username') as string;
+    const token = formData.get('username') as string; // This is actually the JWT token
 
     console.log('Received file:', file.name, 'Size:', file.size);
     console.log('Name:', name);
-    console.log('Username:', username);
+    console.log('Token:', token);
 
-    if (!file || !name || !username) {
+    if (!file || !name || !token) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Decode the JWT token to get the actual username
+    let username: string;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { username: string };
+      username = decoded.username;
+    } catch (error) {
+      console.error('Error decoding JWT:', error);
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    console.log('Decoded username:', username);
 
     const tempFilePath = path.join(os.tmpdir(), file.name);
     const buffer = await file.arrayBuffer();
@@ -110,6 +123,7 @@ export async function POST(request: NextRequest) {
     console.log('Arquivo temporário removido');
 
     console.log('Saving metadata to Supabase...');
+    const currentTimestamp = new Date().toISOString();
     const { data, error } = await supabase
       .from('media_uploads')
       .insert([
@@ -117,8 +131,8 @@ export async function POST(request: NextRequest) {
           file_id: uploadedFile.id,
           file_name: name,
           mime_type: uploadedFile.mimeType,
-          username: username,
-          created_at: uploadedFile.createdTime,
+          username: username, // Use the decoded username here
+          created_at: currentTimestamp, // Usando a data e hora atual do servidor
           google_drive_link: uploadedFile.webViewLink,
           thumbnail_link: `https://drive.google.com/thumbnail?id=${uploadedFile.id}`,
         }
@@ -126,26 +140,47 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error saving to Supabase:', error);
-      return NextResponse.json({ error: 'Error saving file metadata' }, { status: 500 });
+      // Tente obter mais detalhes sobre o erro
+      if (error.details) {
+        console.error('Error details:', error.details);
+      }
+      if (error.hint) {
+        console.error('Error hint:', error.hint);
+      }
+      return NextResponse.json({ error: 'Error saving file metadata', details: error }, { status: 500 });
     }
+
+    console.log('Metadata saved successfully:', data);
 
     console.log('Updating upload count...');
     const { error: updateError } = await supabase.rpc('increment_upload_count', { username_param: username });
 
     if (updateError) {
       console.error('Error updating upload count:', updateError);
+      // Log mais detalhes sobre o erro, se disponíveis
+      if (updateError.details) {
+        console.error('Update error details:', updateError.details);
+      }
+      if (updateError.hint) {
+        console.error('Update error hint:', updateError.hint);
+      }
+    } else {
+      console.log('Upload count updated successfully');
     }
 
     return NextResponse.json({ 
-      message: 'File uploaded successfully', 
+      message: 'File uploaded and metadata saved successfully', 
       fileId: uploadedFile.id, 
-      webViewLink: uploadedFile.webViewLink 
+      webViewLink: uploadedFile.webViewLink,
+      username: username, // Adicionando o nome de usuário à resposta
+      uploadedAt: currentTimestamp // Adicionando a data e hora do upload à resposta
     });
   } catch (error) {
     console.error('Error in upload process:', error);
-    console.error('Erro detalhado no processo de upload:', error);
-    if (error.response && error.response.data && error.response.data.error) {
-      console.error('Google Drive API error:', error.response.data.error);
+    // Tente obter mais detalhes sobre o erro
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
     }
     return NextResponse.json({ error: 'Error in upload process', details: JSON.stringify(error, Object.getOwnPropertyNames(error)) }, { status: 500 });
   }
