@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Upload } from 'lucide-react';
 
-
 interface RankingItem {
   username: string;
   upload_count: number;
@@ -15,7 +14,7 @@ export function UserRanking() {
   useEffect(() => {
     const fetchRanking = async () => {
       try {
-        const response = await fetch('/api/user-ranking'); // URL relativa
+        const response = await fetch('/api/user-ranking');
         if (response.ok) {
           const data = await response.json();
           setRanking(data);
