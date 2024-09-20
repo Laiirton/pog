@@ -1,15 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
+// Importações necessárias
 import { useState, useRef, useCallback } from 'react'
 
 import { Upload, X, FileImage, FileVideo, Loader } from 'lucide-react'
 
+// Interface para as props do componente MediaUpload
 interface MediaUploadProps {
   onUploadSuccess: () => void;
 }
 
+// Componente principal de upload de mídia
 export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
+  // Estados para armazenar o arquivo, nome do arquivo, estado de arrastar, etc.
   const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
@@ -17,6 +21,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
+  // Função para lidar com a mudança de arquivo
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0])
@@ -24,6 +29,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
     }
   }
 
+  // Função para lidar com o drop de arquivo
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setIsDragging(false)
@@ -33,20 +39,24 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
     }
   }
 
+  // Função para lidar com o drag over
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setIsDragging(true)
   }
 
+  // Função para lidar com o drag leave
   const handleDragLeave = () => {
     setIsDragging(false)
   }
 
+  // Função para remover o arquivo selecionado
   const removeFile = () => {
     setFile(null)
     setFileName('')
   }
 
+  // Função para lidar com o upload do arquivo
   const handleUpload = useCallback(async () => {
     if (file && fileName) {
       setIsUploading(true)
@@ -56,8 +66,9 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       formData.append('file', file)
       formData.append('name', fileName)
 
+      // Obter o username e token do localStorage
       const username = localStorage.getItem('username')
-      const token = localStorage.getItem('token') // Obter o token do localStorage
+      const token = localStorage.getItem('token')
       if (!username || !token) {
         setUploadError('User not authenticated')
         setIsUploading(false)
@@ -66,6 +77,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       formData.append('username', username)
 
       try {
+        // Enviar o arquivo para a API
         const response = await fetch('/api/upload', {
           method: 'POST',
           headers: {
@@ -82,6 +94,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
         const result = await response.json()
         console.log('File uploaded successfully:', result)
         
+        // Resetar estados após upload bem-sucedido
         setFile(null)
         setFileName('')
         onUploadSuccess()
@@ -95,6 +108,7 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   }, [file, fileName, onUploadSuccess])
 
   return (
+    // Estrutura do componente de upload
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="w-full max-w-md bg-black bg-opacity-80 rounded-lg shadow-lg border-2 border-green-500 overflow-hidden">
         <div className="p-6 space-y-6">
