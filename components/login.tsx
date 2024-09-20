@@ -8,24 +8,29 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Eye, EyeOff } from 'lucide-react'
 
+// Interface para as propriedades do componente Login
 interface LoginProps {
   onLoginSuccess: (token: string) => void;
   onSwitchToRegister: () => void;
 }
 
+// Componente de Login
 export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
+  // Estados para armazenar o username, password, visibilidade do password, erro e estado de carregamento
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Função para lidar com o envio do formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
+      // Envia uma requisição POST para a API de login
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,10 +40,12 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
       const data = await response.json();
 
       if (response.ok) {
+        // Armazena o token e o username no localStorage e chama a função de sucesso
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
         onLoginSuccess(data.token);
       } else {
+        // Define a mensagem de erro caso o login falhe
         setError(data.error || 'Login failed');
       }
     } catch (err) {
