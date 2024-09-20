@@ -93,24 +93,47 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const name = formData.get('name') as string;
-    const token = formData.get('username') as string; // This is actually the JWT token
+    const formUsername = formData.get('username') as string; // Renamed to formUsername
 
     console.log('Received file:', file.name, 'Size:', file.size);
     console.log('Name:', name);
-    console.log('Token:', token);
+    console.log('Username:', formUsername);
 
-    if (!file || !name || !token) {
+    if (!file || !name || !formUsername) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Decode the JWT token to get the actual username
+    // Obter o token do cabeçalho da requisição
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'No token provided' }, { status: 401 });
+    }
+    const token = authHeader.split(' ')[1];
+
+    // Decodificar o token JWT
     let username: string;
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { username: string };
-      username = decoded.username;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { username?: string, sid?: string };
+      if (decoded.username) {
+        username = decoded.username;
+      } else if (decoded.sid) {
+        // Se não houver username, mas houver sid, busque o username no Supabase
+        const { data, error } = await supabase
+          .from('usernames')
+          .select('username')
+          .eq('sid', decoded.sid)
+          .single();
+        
+        if (error || !data) {
+          throw new Error('User not found');
+        }
+        username = data.username;
+      } else {
+        throw new Error('Invalid token structure');
+      }
     } catch (error) {
       console.error('Error decoding JWT:', error);
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
 
     console.log('Decoded username:', username);
@@ -136,8 +159,8 @@ export async function POST(request: NextRequest) {
           file_id: uploadedFile.id,
           file_name: name,
           mime_type: uploadedFile.mimeType,
-          username: username, // Use the decoded username here
-          created_at: currentTimestamp, // Usando a data e hora atual do servidor
+          username: username,
+          created_at: currentTimestamp,
           google_drive_link: uploadedFile.webViewLink,
           thumbnail_link: `https://drive.google.com/thumbnail?id=${uploadedFile.id}`,
         }
