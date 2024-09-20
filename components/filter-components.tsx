@@ -21,6 +21,10 @@ interface FilterComponentsProps {
   endDate: Date | null;
   setEndDate: React.Dispatch<React.SetStateAction<Date | null>>;
   allUsers: string[];
+  title: string;
+  setTitle: React.Dispatch<React.SetStateAction<string>>;
+  date: Date | null;
+  setDate: React.Dispatch<React.SetStateAction<Date | null>>;
 }
 
 export function FilterComponentsComponent({
@@ -28,6 +32,12 @@ export function FilterComponentsComponent({
   setSelectedType,
   selectedUser,
   setSelectedUser,
+  searchTerm,
+  setSearchTerm,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   title,
   setTitle,
   date,
@@ -162,8 +172,8 @@ export function FilterComponentsComponent({
           <PopoverContent className="w-auto p-0 bg-black border border-green-500" align="start">
             <Calendar
               mode="single"
-              selected={date}
-              onSelect={setDate}
+              selected={date || undefined}  // Ensure date is not null
+              onSelect={(day) => setDate(day || null)}  // Convert undefined to null
               initialFocus
             />
           </PopoverContent>
