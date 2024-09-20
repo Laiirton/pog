@@ -12,6 +12,7 @@ import jwt from 'jsonwebtoken';
 console.log('GOOGLE_DRIVE_CLIENT_ID:', process.env.GOOGLE_DRIVE_CLIENT_ID);
 console.log('GOOGLE_DRIVE_REDIRECT_URI:', process.env.GOOGLE_DRIVE_REDIRECT_URI);
 console.log('GOOGLE_DRIVE_FOLDER_ID:', process.env.GOOGLE_DRIVE_FOLDER_ID);
+console.log('GOOGLE_DRIVE_REFRESH_TOKEN:', process.env.GOOGLE_DRIVE_REFRESH_TOKEN);
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -19,11 +20,9 @@ const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_DRIVE_REDIRECT_URI
 );
 
-oauth2Client.on('tokens', (tokens) => {
-  if (tokens.refresh_token) {
-    console.log('Novo refresh token:', tokens.refresh_token);
-  }
-  console.log('Access token atualizado');
+// Set the refresh token immediately after creating the client
+oauth2Client.setCredentials({
+  refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
 });
 
 const SCOPES = [
@@ -33,18 +32,25 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive.appfolder'
 ];
 
-oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
-});
+async function refreshToken() {
+  try {
+    const { credentials } = await oauth2Client.refreshAccessToken();
+    oauth2Client.setCredentials(credentials);
+    console.log('Token refreshed successfully');
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    throw error;
+  }
+}
 
 async function ensureValidToken() {
   try {
-    console.log('Obtendo token válido...');
-    const tokenResponse = await oauth2Client.getAccessToken();
-    oauth2Client.setCredentials(tokenResponse?.token ? { access_token: tokenResponse.token } : {});
-    console.log('Token válido obtido');
+    const { expiry_date } = oauth2Client.credentials;
+    if (!expiry_date || expiry_date < Date.now() + 60000) {
+      await refreshToken();
+    }
   } catch (error) {
-    console.error('Erro ao obter token válido:', error);
+    console.error('Error ensuring valid token:', error);
     throw error;
   }
 }
@@ -76,13 +82,7 @@ async function uploadFile(filePath: string, fileName: string, mimeType: string) 
     console.log('Arquivo enviado com sucesso:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Erro detalhado ao fazer upload do arquivo:', error);
-    if (error instanceof Error && 'response' in error) {
-      const errorWithResponse = error as { response?: { data: unknown } };
-      if (errorWithResponse.response) {
-        console.error('Google Drive API error:', JSON.stringify(errorWithResponse.response.data, null, 2));
-      }
-    }
+    console.error('Error in uploadFile:', error);
     throw error;
   }
 }
