@@ -1,8 +1,8 @@
 'use client'
 
-import { RetroMediaGalleryComponent } from '../components/retro-media-gallery';
-import { AuthScreen } from '../components/auth-screen';
 import { useState, useEffect } from 'react';
+import { Welcome } from '../components/welcome';
+import { RetroMediaGalleryComponent } from '../components/retro-media-gallery';
 import { LoadingAnimation } from '../components/loading-animation';
 
 export default function Home() {
@@ -38,7 +38,7 @@ export default function Home() {
       {isAuthenticated ? (
         <RetroMediaGalleryComponent onLogout={handleLogout} />
       ) : (
-        <AuthScreen onAuthSuccess={handleAuthSuccess} />
+        <Welcome onLogout={handleLogout} />
       )}
     </main>
   );
