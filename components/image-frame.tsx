@@ -17,7 +17,7 @@ interface ImageFrameProps {
 const getImageSrc = (src: string): string => {
   if (src.includes('drive.google.com')) {
     const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1]
-    return `https://drive.google.com/uc?export=view&id=${fileId}`
+    return `/api/proxy-image?id=${fileId}`
   }
   return src
 }
