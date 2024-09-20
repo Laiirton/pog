@@ -20,8 +20,7 @@ export default function Home() {
     checkUser();
   }, []);
 
-  const handleAuthSuccess = (username: string) => {
-    localStorage.setItem('username', username);
+  const handleEnter = () => {
     setIsAuthenticated(true);
   };
 
@@ -39,7 +38,7 @@ export default function Home() {
       {isAuthenticated ? (
         <RetroMediaGalleryComponent onLogout={handleLogout} />
       ) : (
-        <Welcome onLogout={handleLogout} />
+        <Welcome onEnter={handleEnter} />
       )}
     </main>
   );
