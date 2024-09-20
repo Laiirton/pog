@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+
 import { Upload, X, FileImage, FileVideo, Loader } from 'lucide-react'
 
 interface MediaUploadProps {
