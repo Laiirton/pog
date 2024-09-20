@@ -15,6 +15,7 @@ const Calendar = React.forwardRef<
 >(({ className, classNames, showOutsideDays = true, ...props }, ref) => {
   return (
     <DayPicker
+      ref={ref}
       showOutsideDays={showOutsideDays}
       className={cn("p-3 bg-black text-green-500", className)}
       classNames={{
@@ -47,12 +48,12 @@ const Calendar = React.forwardRef<
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ...props }) => (
+        IconLeft: () => (
           <div className="flex items-center justify-center w-full h-full">
             <ChevronLeft className="h-4 w-4 text-green-500" />
           </div>
         ),
-        IconRight: ({ ...props }) => (
+        IconRight: () => (
           <div className="flex items-center justify-center w-full h-full">
             <ChevronRight className="h-4 w-4 text-green-500" />
           </div>
