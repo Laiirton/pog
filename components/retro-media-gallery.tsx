@@ -14,6 +14,7 @@ import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 import { LoadingAnimation } from './loading-animation'
+import { useImagePreloader } from '../hooks/useImagePreloader';
 
 const fetcher = async (url: string) => {
   const response = await fetch(url);
@@ -49,36 +50,33 @@ interface RetroMediaGalleryComponentProps {
   onLogout: () => void;
 }
 
+const getImageSrc = (src: string) => {
+  if (src.includes('drive.google.com')) {
+    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1];
+    return fileId ? `/api/file/${fileId}` : src;
+  }
+  return src;
+};
+
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
   const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<'all' | 'images' | 'videos'>('all');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminToken, setAdminToken] = useState('');
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [loadedThumbnails, setLoadedThumbnails] = useState<Set<string>>(new Set());
+  const [selectedType, setSelectedType] = useState('all');
+  const [selectedUser, setSelectedUser] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [allUsers, setAllUsers] = useState<string[]>([]);
 
-  if (error) {
-    console.error('Error fetching media:', error);
-    return <div>Error loading media. Please try again later.</div>;
-  }
-
-  if (!mediaItems) {
-    return <LoadingAnimation />;
-  }
-
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
-  const [showUpload, setShowUpload] = useState(false)
-  const [activeCategory, setActiveCategory] = useState<'all' | 'images' | 'videos'>('all')
-  const router = useRouter()
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [adminToken, setAdminToken] = useState('')
-  const [showAdminLogin, setShowAdminLogin] = useState(false)
-  const [loadedThumbnails, setLoadedThumbnails] = useState<Set<string>>(new Set())
-
-  const observerRef = useRef<IntersectionObserver | null>(null)
-
-  const [selectedType, setSelectedType] = useState('all')
-  const [selectedUser, setSelectedUser] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [startDate, setStartDate] = useState<Date | null>(null)
-  const [endDate, setEndDate] = useState<Date | null>(null)
-
-  const [allUsers, setAllUsers] = useState<string[]>([])
+  const router = useRouter();
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const { preloadImage, getCachedImage } = useImagePreloader();
 
   useEffect(() => {
     if (mediaItems) {
@@ -87,18 +85,69 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [mediaItems]);
 
+  useEffect(() => {
+    const storedToken = localStorage.getItem('adminToken');
+    if (storedToken) {
+      setIsAdmin(true);
+      setAdminToken(storedToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement;
+            img.src = img.dataset.src || '';
+            setLoadedThumbnails((prev) => new Set(prev).add(img.dataset.src || ''));
+            observerRef.current?.unobserve(img);
+          }
+        });
+      },
+      { rootMargin: '100px' }
+    );
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mediaItems) {
+      mediaItems.forEach(item => {
+        if (item.type === 'image') {
+          preloadImage(getImageSrc(item.src));
+        }
+      });
+    }
+  }, [mediaItems, preloadImage]);
+
+  const filteredMediaItems = useMemo(() => {
+    if (!mediaItems) return [];
+    return mediaItems.filter(item => 
+      (selectedType === 'all' || item.type === selectedType) &&
+      (!selectedUser || item.username === selectedUser) &&
+      (!searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (!startDate || new Date(item.created_at) >= startDate) &&
+      (!endDate || new Date(item.created_at) <= endDate)
+    );
+  }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, endDate]);
+
   const handleUploadSuccess = useCallback(() => {
-    mutate()
-    setShowUpload(false)
-  }, [mutate])
+    mutate();
+    setShowUpload(false);
+  }, [mutate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('username')
-    localStorage.removeItem('adminToken')
-    setIsAdmin(false)
-    setAdminToken('')
-    onLogout()
-  }
+    localStorage.removeItem('username');
+    localStorage.removeItem('adminToken');
+    setIsAdmin(false);
+    setAdminToken('');
+    onLogout();
+  };
 
   const handleAdminLogin = async (username: string, password: string) => {
     try {
@@ -123,66 +172,34 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   };
 
   const handleDeleteMedia = async (id: string) => {
-    if (!isAdmin) return
+    if (!isAdmin) return;
     if (confirm('Are you sure you want to delete this media?')) {
       try {
         const response = await fetch(`/api/delete-media/${id}`, {
           method: 'DELETE',
           headers: { 'admin-token': adminToken },
-        })
-        const result = await response.json()
+        });
+        const result = await response.json();
         if (response.ok) {
-          console.log('Delete result:', result)
-          mutate() // Refresh the media list
+          console.log('Delete result:', result);
+          mutate();
         } else {
-          console.error('Failed to delete media:', result)
+          console.error('Failed to delete media:', result);
         }
       } catch (error) {
-        console.error('Error deleting media:', error)
+        console.error('Error deleting media:', error);
       }
     }
+  };
+
+  if (error) {
+    console.error('Error fetching media:', error);
+    return <div>Error loading media. Please try again later.</div>;
   }
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('adminToken')
-    if (storedToken) {
-      setIsAdmin(true)
-      setAdminToken(storedToken)
-    }
-  }, [])
-
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const img = entry.target as HTMLImageElement
-            img.src = img.dataset.src || ''
-            setLoadedThumbnails((prev) => new Set(prev).add(img.dataset.src || ''))
-            observerRef.current?.unobserve(img)
-          }
-        })
-      },
-      { rootMargin: '100px' }
-    )
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
-    }
-  }, [])
-
-  const filteredMediaItems = useMemo(() => {
-    if (!mediaItems) return [];
-    return mediaItems.filter(item => 
-      (selectedType === 'all' || item.type === selectedType) &&
-      (!selectedUser || item.username === selectedUser) &&
-      (!searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (!startDate || new Date(item.created_at) >= startDate) &&
-      (!endDate || new Date(item.created_at) <= endDate)
-    );
-  }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, endDate]);
+  if (!mediaItems) {
+    return <LoadingAnimation />;
+  }
 
   return (
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
@@ -273,6 +290,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
                     observerRef={observerRef}
                     isLoaded={loadedThumbnails.has(item.thumbnail)}
+                    preloadImage={preloadImage}
+                    getCachedImage={getCachedImage}
                   />
                 ))}
               </div>
@@ -281,7 +300,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
         </main>
       </div>
 
-      <SelectedMediaModal selectedMedia={selectedMedia} onClose={() => setSelectedMedia(null)} />
+      <SelectedMediaModal selectedMedia={selectedMedia} onClose={() => setSelectedMedia(null)} getCachedImage={getCachedImage} />
       {showUpload && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
           <div className="bg-black border border-green-500 rounded-lg p-6 relative max-w-md w-full">
@@ -304,15 +323,27 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   )
 }
 
-const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: { 
+const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded, preloadImage, getCachedImage }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void;
   observerRef: React.RefObject<IntersectionObserver>;
   isLoaded: boolean;
+  preloadImage: (src: string) => Promise<void>;
+  getCachedImage: (src: string) => string | null;
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const fullImageSrc = getImageSrc(item.src);
+  const cachedImage = getCachedImage(fullImageSrc);
+
+  useEffect(() => {
+    if (isHovered && !imageLoaded && !cachedImage) {
+      preloadImage(fullImageSrc).then(() => setImageLoaded(true)).catch(() => setImageError(true));
+    }
+  }, [isHovered, imageLoaded, fullImageSrc, cachedImage]);
 
   return (
     <motion.div
@@ -320,6 +351,8 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: {
       whileHover={{ scale: 1.05, borderColor: '#00FF00' }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video">
         {!imageError ? (
@@ -371,15 +404,7 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded }: {
   )
 }
 
-const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaItem | null; onClose: () => void }) => {
-  const getImageSrc = (src: string) => {
-    if (src.includes('drive.google.com')) {
-      const fileId = src.match(/\/d\/(.+?)\/view/)?.[1];
-      return fileId ? `/api/file/${fileId}` : src;
-    }
-    return src;
-  };
-
+const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { selectedMedia: MediaItem | null; onClose: () => void; getCachedImage: (src: string) => string | null }) => {
   return (
     <AnimatePresence>
       {selectedMedia && (
@@ -401,86 +426,20 @@ const SelectedMediaModal = ({ selectedMedia, onClose }: { selectedMedia: MediaIt
               {selectedMedia.type === 'video' ? (
                 <VideoPlayer src={getImageSrc(selectedMedia.src)} title={selectedMedia.title} />
               ) : (
-                <div className="relative w-full h-full">
-                  <img
-                    src={getImageSrc(selectedMedia.src)}
-                    alt={selectedMedia.title || ''}
-                    className="w-full h-full object-contain"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-green-500 p-2">
-                    <p>Uploaded by: {selectedMedia.username || 'Unknown'}</p>
-                    <p>Uploaded on: {formatDate(selectedMedia.created_at)}</p>
-                  </div>
-                </div>
+                <ImageFrame
+                  src={getImageSrc(selectedMedia.src)}
+                  alt={selectedMedia.title || ''}
+                  username={selectedMedia.username || 'Unknown'}
+                  createdAt={selectedMedia.created_at}
+                  thumbnail={selectedMedia.thumbnail}
+                  preloaded={true}
+                  getCachedImage={getCachedImage}
+                />
               )}
             </div>
           </div>
         </motion.div>
       )}
     </AnimatePresence>
-  );
-};
-
-export const LoadingAnimation = () => {
-  const containerVariants = {
-    start: {
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-    end: {
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const circleVariants = {
-    start: {
-      y: '0%',
-      opacity: 0,
-    },
-    end: {
-      y: '100%',
-      opacity: 1,
-    },
-  };
-
-  const circleTransition = {
-    duration: 0.8,
-    yoyo: Infinity,
-    ease: 'easeInOut',
-  };
-
-  return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center">
-      <motion.div
-        className="flex space-x-4 mb-8"
-        variants={containerVariants}
-        initial="start"
-        animate="end"
-      >
-        {[0, 1, 2, 3, 4].map((index) => (
-          <motion.span
-            key={index}
-            className="w-4 h-4 bg-green-500 rounded-full"
-            variants={circleVariants}
-            transition={circleTransition}
-            style={{
-              filter: `blur(${index * 0.5}px)`,
-              opacity: 1 - index * 0.2,
-            }}
-          />
-        ))}
-      </motion.div>
-      <motion.h2
-        className="text-green-500 text-3xl font-bold"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse', repeatDelay: 0.5 }}
-      >
-        Pog Gallery
-      </motion.h2>
-    </div>
   );
 };
