@@ -28,13 +28,12 @@ export async function POST(req: NextRequest) {
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
-    if (!passwordMatch) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    if (passwordMatch) {
+      const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET!, { expiresIn: '24h' });
+      return NextResponse.json({ message: 'Login successful', token, username: user.username });
     }
 
-    const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET!, { expiresIn: '1h' });
-
-    return NextResponse.json({ message: 'Login successful', token });
+    return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   } catch (error) {
     console.error('Error logging in:', error);
     return NextResponse.json({ error: 'An error occurred while logging in' }, { status: 500 });
