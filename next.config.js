@@ -8,7 +8,7 @@ const nextConfig = {
     GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID,
   },
   images: {
-    domains: ['lh3.googleusercontent.com', 'drive.google.com'],
+    domains: ['drive.google.com', 'lh3.googleusercontent.com'],
   },
   serverRuntimeConfig: {
     // Adicione isso para usar fs no servidor
