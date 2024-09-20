@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
-
+// Importações necessárias
 import { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, X } from "lucide-react"
 import { format } from "date-fns"
 
+// Interface para as props do componente FilterComponents
 interface FilterComponentsProps {
   selectedType: string;
   setSelectedType: React.Dispatch<React.SetStateAction<string>>;
@@ -25,6 +26,7 @@ interface FilterComponentsProps {
   allUsers: string[];
 }
 
+// Componente principal de filtros
 export function FilterComponentsComponent({
   selectedType,
   setSelectedType,
@@ -38,11 +40,13 @@ export function FilterComponentsComponent({
   setEndDate,
   allUsers
 }: FilterComponentsProps) {
+  // Estados para armazenar o input do usuário, usuários filtrados e visibilidade da lista de usuários
   const [userInput, setUserInput] = useState(selectedUser);
   const [filteredUsers, setFilteredUsers] = useState<string[]>(allUsers);
   const [showUserList, setShowUserList] = useState(false);
   const userInputRef = useRef<HTMLInputElement>(null);
 
+  // Efeito para filtrar a lista de usuários com base no input do usuário
   useEffect(() => {
     if (userInput) {
       const filtered = allUsers.filter(user => 
@@ -54,18 +58,21 @@ export function FilterComponentsComponent({
     }
   }, [userInput, allUsers]);
 
+  // Função para selecionar um usuário da lista filtrada
   const handleUserSelect = (user: string) => {
     setSelectedUser(user);
     setUserInput(user);
     setShowUserList(false);
   };
 
+  // Função para lidar com a mudança no input do usuário
   const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(e.target.value);
-    setSelectedUser(''); // Clear selected user when input changes
+    setSelectedUser(''); // Limpa o usuário selecionado quando o input muda
     setShowUserList(true);
   };
 
+  // Função para limpar o input do usuário
   const clearUserInput = () => {
     setUserInput('');
     setSelectedUser('');
@@ -74,6 +81,7 @@ export function FilterComponentsComponent({
     userInputRef.current?.focus();
   };
 
+  // Efeito para lidar com cliques fora do input de usuário e esconder a lista de usuários
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userInputRef.current && !userInputRef.current.contains(event.target as Node)) {
@@ -89,6 +97,7 @@ export function FilterComponentsComponent({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Filtro por tipo */}
       <div className="flex flex-col">
         <Label htmlFor="type-select" className="mb-2">Type</Label>
         <select
@@ -103,6 +112,7 @@ export function FilterComponentsComponent({
         </select>
       </div>
 
+      {/* Filtro por usuário */}
       <div className="flex flex-col relative" ref={userInputRef}>
         <Label htmlFor="user-input" className="mb-2">User</Label>
         <div className="relative">
@@ -139,6 +149,7 @@ export function FilterComponentsComponent({
         )}
       </div>
 
+      {/* Filtro por título */}
       <div className="flex flex-col">
         <Label htmlFor="title-input" className="mb-2">Title</Label>
         <Input
@@ -151,6 +162,7 @@ export function FilterComponentsComponent({
         />
       </div>
 
+      {/* Filtro por data */}
       <div className="flex flex-col">
         <Label className="mb-2">Date</Label>
         <Popover>
@@ -166,10 +178,9 @@ export function FilterComponentsComponent({
           <PopoverContent className="w-auto p-0 bg-black border border-green-500" align="start">
             <Calendar
               mode="single"
-              selected={startDate || undefined}  // Ensure date is not null
-              onSelect={(day) => setStartDate(day || null)}  // Convert undefined to null
+              selected={startDate || undefined}  // Garante que a data não seja nula
+              onSelect={(day) => setStartDate(day || null)}  // Converte undefined para null
               initialFocus
-
             />
           </PopoverContent>
         </Popover>
