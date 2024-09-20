@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
+// Importações necessárias
 import { useState } from 'react'
 
 import { motion } from 'framer-motion'
@@ -8,24 +9,29 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Eye, EyeOff } from 'lucide-react'
 
+// Interface para as props do componente Register
 interface RegisterProps {
   onRegistrationSuccess: (username: string) => void;
   onSwitchToLogin: () => void;
 }
 
+// Componente principal de registro
 export function Register({ onRegistrationSuccess, onSwitchToLogin }: RegisterProps) {
+  // Estados para armazenar os valores dos campos e controlar o estado do componente
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Função para lidar com o envio do formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
+      // Envia os dados de registro para a API
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,8 +41,10 @@ export function Register({ onRegistrationSuccess, onSwitchToLogin }: RegisterPro
       const data = await response.json();
 
       if (response.ok) {
+        // Chama a função de sucesso no registro
         onRegistrationSuccess(username);
       } else {
+        // Define a mensagem de erro caso o registro falhe
         setError(data.error || 'Registration failed');
       }
     } catch (err) {
@@ -48,6 +56,7 @@ export function Register({ onRegistrationSuccess, onSwitchToLogin }: RegisterPro
   };
 
   return (
+    // Formulário de registro com animação
     <motion.form
       onSubmit={handleSubmit}
       initial={{ opacity: 0, scale: 0.9 }}
