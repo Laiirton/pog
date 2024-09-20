@@ -243,10 +243,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
               <FilterComponentsComponent
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
-                title={title}
-                setTitle={setTitle}
-                date={date}
-                setDate={setDate}
                 selectedUser={selectedUser}
                 setSelectedUser={setSelectedUser}
                 searchTerm={searchTerm}
