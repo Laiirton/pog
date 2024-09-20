@@ -3,6 +3,8 @@ const nextConfig = {
   images: {
     domains: ['drive.google.com', 'lh3.googleusercontent.com'],
     unoptimized: true,
+    loader: 'custom',
+    loaderFile: './imageLoader.js',
   },
   env: {
     GOOGLE_DRIVE_CLIENT_ID: process.env.GOOGLE_DRIVE_CLIENT_ID,
