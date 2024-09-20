@@ -33,8 +33,7 @@ export function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const [showControls, setShowControls] = useState(false)
-  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
+  const [showControls, setShowControls] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
   const volumeSliderRef = useRef<HTMLDivElement>(null)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -131,10 +130,6 @@ export function VideoPlayer({
     if (videoRef.current) {
       setDuration(videoRef.current.duration)
       setIsLoading(false)
-      setVideoDimensions({
-        width: videoRef.current.videoWidth,
-        height: videoRef.current.videoHeight
-      })
     }
   }, [])
 
