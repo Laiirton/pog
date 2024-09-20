@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { motion } from 'framer-motion';
+
 
 export const LoadingAnimation: React.FC = () => {
   const containerVariants = {
