@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+
 import { Play, Pause, Volume2, VolumeX, Maximize, Rewind, FastForward, Download } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
