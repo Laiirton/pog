@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
 import Image from 'next/image'
@@ -8,23 +8,48 @@ interface ImageFrameProps {
   alt: string
   username: string
   createdAt: string
+  thumbnail: string // Adicionando thumbnail como prop
+  preloaded?: boolean
+  getCachedImage: (src: string) => string | null;
 }
 
 const getImageSrc = (src: string) => {
   if (src.includes('drive.google.com')) {
-    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1];
+    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1];
     return fileId ? `/api/file/${fileId}` : src;
   }
   return src;
 };
 
-export function ImageFrame({ src, alt, username, createdAt }: ImageFrameProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const imageSrc = getImageSrc(src);
+export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded = false, getCachedImage }: ImageFrameProps) {
+  const [isLoading, setIsLoading] = useState(!preloaded);
+  const [imageError, setImageError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(preloaded ? src : thumbnail);
+  const fullImageSrc = getImageSrc(src);
+  const cachedImage = getCachedImage(fullImageSrc);
+
+  useEffect(() => {
+    if (!preloaded && !cachedImage) {
+      const preloadImage = new window.Image();
+      preloadImage.src = fullImageSrc;
+      preloadImage.onload = () => {
+        setCurrentSrc(fullImageSrc);
+        setIsLoading(false);
+      };
+      preloadImage.onerror = () => {
+        console.error('Error loading full image:', fullImageSrc);
+        setImageError(true);
+        setIsLoading(false);
+      };
+    } else if (cachedImage) {
+      setCurrentSrc(cachedImage);
+      setIsLoading(false);
+    }
+  }, [fullImageSrc, preloaded, cachedImage]);
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(imageSrc)
+      const response = await fetch(fullImageSrc)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -52,15 +77,20 @@ export function ImageFrame({ src, alt, username, createdAt }: ImageFrameProps) {
             <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
-        <Image
-          src={imageSrc}
-          alt={alt}
-          layout="fill"
-          objectFit="contain"
-          onLoadingComplete={() => setIsLoading(false)}
-          className="transition-opacity duration-300"
-          style={{ opacity: isLoading ? 0 : 1 }}
-        />
+        {!imageError ? (
+          <Image
+            src={currentSrc}
+            alt={alt}
+            layout="fill"
+            objectFit="contain"
+            className="transition-opacity duration-300"
+            style={{ opacity: isLoading ? 0.5 : 1 }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-black text-green-500">
+            Failed to load image
+          </div>
+        )}
       </div>
       <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4 text-green-500 border-t-2 border-green-500">
         <h2 className="text-xl font-bold mb-2 text-green-400">{alt}</h2>
