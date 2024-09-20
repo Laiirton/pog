@@ -62,7 +62,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [showUpload, setShowUpload] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<'all' | 'images' | 'videos'>('all');
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminToken, setAdminToken] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -74,8 +73,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [allUsers, setAllUsers] = useState<string[]>([]);
 
-  const router = useRouter();
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const { preloadImage, getCachedImage } = useImagePreloader();
 
   useEffect(() => {
@@ -91,28 +88,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       setIsAdmin(true);
       setAdminToken(storedToken);
     }
-  }, []);
-
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const img = entry.target as HTMLImageElement;
-            img.src = img.dataset.src || '';
-            setLoadedThumbnails((prev) => new Set(prev).add(img.dataset.src || ''));
-            observerRef.current?.unobserve(img);
-          }
-        });
-      },
-      { rootMargin: '100px' }
-    );
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
   }, []);
 
   useEffect(() => {
@@ -288,8 +263,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     item={item} 
                     onClick={() => setSelectedMedia(item)} 
                     onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
-                    observerRef={observerRef}
-                    isLoaded={loadedThumbnails.has(item.thumbnail)}
                     preloadImage={preloadImage}
                     getCachedImage={getCachedImage}
                   />
@@ -323,12 +296,10 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   )
 }
 
-const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded, preloadImage, getCachedImage }: { 
+const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void;
-  observerRef: React.RefObject<IntersectionObserver>;
-  isLoaded: boolean;
   preloadImage: (src: string) => Promise<void>;
   getCachedImage: (src: string) => string | null;
 }) => {
@@ -343,7 +314,7 @@ const MediaItem = ({ item, onClick, onDelete, observerRef, isLoaded, preloadImag
     if (isHovered && !imageLoaded && !cachedImage) {
       preloadImage(fullImageSrc).then(() => setImageLoaded(true)).catch(() => setImageError(true));
     }
-  }, [isHovered, imageLoaded, fullImageSrc, cachedImage]);
+  }, [isHovered, imageLoaded, fullImageSrc, cachedImage, preloadImage]);
 
   return (
     <motion.div
