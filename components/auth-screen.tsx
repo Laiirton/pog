@@ -1,11 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Login } from './login'
 import { Register } from './register'
-import { MatrixRain } from './matrix-rain'
-import { UserRanking } from './user-ranking'
 
 interface AuthScreenProps {
   onAuthSuccess: (username: string) => void;
