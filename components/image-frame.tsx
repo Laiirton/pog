@@ -17,7 +17,7 @@ interface ImageFrameProps {
 const getImageSrc = (src: string): string => {
   if (src.includes('drive.google.com')) {
     const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1]
-    return fileId ? `/api/file/${fileId}` : src
+    return `https://drive.google.com/uc?export=view&id=${fileId}`
   }
   return src
 }
@@ -30,21 +30,13 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
 
   useEffect(() => {
     if (!preloaded && !cachedImage) {
-      const img = document.createElement('img')
+      const img = new window.Image()
       img.src = fullImageSrc
-      const handleLoad = () => setIsLoading(false)
-      const handleError = () => {
+      img.onload = () => setIsLoading(false)
+      img.onerror = () => {
         console.error('Error loading image:', fullImageSrc)
         setImageError(true)
         setIsLoading(false)
-      }
-
-      img.addEventListener('load', handleLoad)
-      img.addEventListener('error', handleError)
-
-      return () => {
-        img.removeEventListener('load', handleLoad)
-        img.removeEventListener('error', handleError)
       }
     } else if (cachedImage) {
       setIsLoading(false)
@@ -91,6 +83,8 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
               objectFit="contain"
               className="transition-opacity duration-300"
               style={{ opacity: isLoading ? 0.5 : 1 }}
+              onError={() => setImageError(true)}
+              unoptimized
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-black text-green-500">
