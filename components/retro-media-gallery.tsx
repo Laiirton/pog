@@ -70,6 +70,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [allUsers, setAllUsers] = useState<string[]>([]);
+  const [title, setTitle] = useState(''); // Added title state
+  const [date, setDate] = useState<Date | null>(null); // Initialize date state with Date | null
 
   const { preloadImage, getCachedImage } = useImagePreloader();
 
@@ -241,6 +243,10 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
               <FilterComponentsComponent
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
+                title={title}
+                setTitle={setTitle}
+                date={date}
+                setDate={setDate}
                 selectedUser={selectedUser}
                 setSelectedUser={setSelectedUser}
                 searchTerm={searchTerm}
