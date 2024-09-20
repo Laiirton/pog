@@ -33,7 +33,7 @@ export async function GET(
       }
     });
 
-    return new NextResponse(file.data as any, {
+    return new NextResponse(file.data as ReadableStream, {
       headers: headers,
     });
   } catch (error) {
