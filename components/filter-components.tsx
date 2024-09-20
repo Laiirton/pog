@@ -21,10 +21,6 @@ interface FilterComponentsProps {
   endDate: Date | null;
   setEndDate: React.Dispatch<React.SetStateAction<Date | null>>;
   allUsers: string[];
-  title: string;
-  setTitle: React.Dispatch<React.SetStateAction<string>>;
-  date: Date | null;
-  setDate: React.Dispatch<React.SetStateAction<Date | null>>;
 }
 
 export function FilterComponentsComponent({
@@ -38,10 +34,6 @@ export function FilterComponentsComponent({
   setStartDate,
   endDate,
   setEndDate,
-  title,
-  setTitle,
-  date,
-  setDate,
   allUsers
 }: FilterComponentsProps) {
   const [userInput, setUserInput] = useState(selectedUser);
@@ -150,8 +142,8 @@ export function FilterComponentsComponent({
         <Input
           id="title-input"
           type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="bg-black text-green-500 border border-green-500 w-full"
           placeholder="Search by file name"
         />
@@ -166,15 +158,16 @@ export function FilterComponentsComponent({
               className={`w-full justify-start text-left font-normal bg-black text-green-500 border border-green-500`}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
+              {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0 bg-black border border-green-500" align="start">
             <Calendar
               mode="single"
-              selected={date || undefined}  // Ensure date is not null
-              onSelect={(day) => setDate(day || null)}  // Convert undefined to null
+              selected={startDate || undefined}  // Ensure date is not null
+              onSelect={(day) => setStartDate(day || null)}  // Convert undefined to null
               initialFocus
+
             />
           </PopoverContent>
         </Popover>
