@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
 import Image from 'next/image'
 
+// Interface para as propriedades do componente ImageFrame
 interface ImageFrameProps {
   src: string
   alt: string
@@ -14,6 +15,7 @@ interface ImageFrameProps {
   getCachedImage: (src: string) => string | null
 }
 
+// Função para obter a URL da imagem, tratando links do Google Drive
 const getImageSrc = (src: string): string => {
   if (src.includes('drive.google.com')) {
     const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1]
@@ -22,12 +24,15 @@ const getImageSrc = (src: string): string => {
   return src
 }
 
+// Componente principal ImageFrame
 export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded = false, getCachedImage }: ImageFrameProps) {
+  // Estados para controlar o carregamento e erro da imagem
   const [isLoading, setIsLoading] = useState(!preloaded)
   const [imageError, setImageError] = useState(false)
   const fullImageSrc = getImageSrc(src)
   const cachedImage = getCachedImage(fullImageSrc)
 
+  // Efeito para carregar a imagem
   useEffect(() => {
     if (!preloaded && !cachedImage) {
       const img = new window.Image()
@@ -43,6 +48,7 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
     }
   }, [fullImageSrc, preloaded, cachedImage])
 
+  // Função para lidar com o download da imagem
   const handleDownload = async () => {
     try {
       const response = await fetch(fullImageSrc)
@@ -67,14 +73,17 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
       exit={{ opacity: 0, scale: 0.9 }}
       className="relative w-full h-full bg-black rounded-lg overflow-hidden shadow-lg"
     >
+      {/* Gradiente de fundo animado */}
       <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 animate-gradient-x"></div>
       <div className="absolute inset-[2px] bg-black rounded-lg overflow-hidden">
         <div className="relative w-full h-full aspect-square">
+          {/* Indicador de carregamento */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black">
               <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
+          {/* Exibição da imagem ou mensagem de erro */}
           {!imageError ? (
             <Image
               src={cachedImage || fullImageSrc}
@@ -92,6 +101,7 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
             </div>
           )}
         </div>
+        {/* Informações da imagem e botão de download */}
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4 text-green-500">
           <h2 className="text-xl font-bold mb-2 text-green-400 truncate">{alt}</h2>
           <p className="text-sm text-green-300">
