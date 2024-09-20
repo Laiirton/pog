@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useRef, useEffect } from 'react'
 
 export const MatrixRain: React.FC = () => {
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
   useEffect(() => {
