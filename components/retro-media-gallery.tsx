@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
     
+// Importações necessárias para o componente
 import useSWR from 'swr'
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
@@ -17,6 +18,7 @@ import { AdminLogin } from './admin-login'
 import { LoadingAnimation } from './loading-animation'
 import { useImagePreloader } from '../hooks/useImagePreloader';
 
+// Função para buscar dados da API
 const fetcher = async (url: string) => {
   const response = await fetch(url);
   if (!response.ok) {
@@ -25,6 +27,7 @@ const fetcher = async (url: string) => {
   return response.json();
 }
 
+// Interface para definir a estrutura de um item de mídia
 interface MediaItem {
   id: string;
   title: string;
@@ -35,6 +38,7 @@ interface MediaItem {
   created_at: string;
 }
 
+// Função para formatar a data
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleString('en-US', {
@@ -47,10 +51,12 @@ const formatDate = (dateString: string) => {
   });
 }
 
+// Interface para as props do componente RetroMediaGalleryComponent
 interface RetroMediaGalleryComponentProps {
   onLogout: () => void;
 }
 
+// Função para obter a URL da imagem, tratando links do Google Drive
 const getImageSrc = (src: string) => {
   if (src.includes('drive.google.com')) {
     const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1];
@@ -59,7 +65,9 @@ const getImageSrc = (src: string) => {
   return src;
 };
 
+// Componente principal da galeria de mídia retrô
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
+  // Estados e hooks para gerenciar os dados e o estado da aplicação
   const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -72,11 +80,12 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [allUsers, setAllUsers] = useState<string[]>([]);
-  const [title, setTitle] = useState(''); // Added title state
-  const [date, setDate] = useState<Date | null>(null); // Initialize date state with Date | null
+  const [title, setTitle] = useState(''); // Estado para o título
+  const [date, setDate] = useState<Date | null>(null); // Estado para a data
 
   const { preloadImage, getCachedImage } = useImagePreloader();
 
+  // Efeito para carregar a lista de usuários
   useEffect(() => {
     if (mediaItems) {
       const users = Array.from(new Set(mediaItems.map((item: MediaItem) => item.username).filter(Boolean) as string[]));
@@ -84,6 +93,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [mediaItems]);
 
+  // Efeito para verificar se há um token de admin armazenado
   useEffect(() => {
     const storedToken = localStorage.getItem('adminToken');
     if (storedToken) {
@@ -92,6 +102,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, []);
 
+  // Efeito para pré-carregar imagens
   useEffect(() => {
     if (mediaItems) {
       mediaItems.forEach(item => {
@@ -102,6 +113,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [mediaItems, preloadImage]);
 
+  // Filtragem dos itens de mídia baseada nos filtros aplicados
   const filteredMediaItems = useMemo(() => {
     if (!mediaItems) return [];
     return mediaItems.filter(item => 
@@ -113,16 +125,19 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     );
   }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, endDate]);
 
+  // Função para lidar com o sucesso do upload
   const handleUploadSuccess = useCallback(() => {
     mutate();
     setShowUpload(false);
   }, [mutate]);
 
+  // Função para lidar com o logout
   const handleLogout = useCallback(() => {
     localStorage.removeItem('username');
     onLogout();
   }, [onLogout]);
 
+  // Função para lidar com o login do admin
   const handleAdminLogin = async (username: string, password: string) => {
     try {
       const response = await fetch('/api/admin-login', {
@@ -145,6 +160,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   };
 
+  // Função para lidar com a exclusão de mídia
   const handleDeleteMedia = async (id: string) => {
     if (!isAdmin) return;
     if (confirm('Are you sure you want to delete this media?')) {
@@ -166,15 +182,18 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   };
 
+  // Tratamento de erro na busca de mídia
   if (error) {
     console.error('Error fetching media:', error);
     return <div>Error loading media. Please try again later.</div>;
   }
 
+  // Exibição de loading enquanto os dados são carregados
   if (!mediaItems) {
     return <LoadingAnimation />;
   }
 
+  // Renderização do componente principal
   return (
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
@@ -295,6 +314,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   )
 }
 
+// Componente para exibir um item de mídia individual
 const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: { 
   item: MediaItem; 
   onClick: () => void; 
@@ -378,6 +398,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
   )
 }
 
+// Componente para exibir o modal com a mídia selecionada
 const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { selectedMedia: MediaItem | null; onClose: () => void; getCachedImage: (src: string) => string | null }) => {
   return (
     <AnimatePresence>
