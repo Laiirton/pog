@@ -6,7 +6,7 @@ import useSWR from 'swr'
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LogOut, Trash2, Upload, User } from 'lucide-react'
+import { X, LogOut, Trash2, Upload, User, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
@@ -36,6 +36,8 @@ interface MediaItem {
   thumbnail: string
   username: string
   created_at: string
+  vote_count: number
+  user_vote?: number // -1 para dislike, 1 para like, undefined para nenhum voto
 }
 
 // Função para formatar a data
@@ -86,6 +88,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [allUsers, setAllUsers] = useState<string[]>([])
   const [title, setTitle] = useState('') // Estado para o título
   const [date, setDate] = useState<Date | null>(null) // Estado para a data
+  const [username, setUsername] = useState<string | null>(null)
+  const [userScore, setUserScore] = useState(0)
 
   const { preloadImage, getCachedImage } = useImagePreloader()
 
@@ -96,6 +100,14 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       setAllUsers(users)
     }
   }, [mediaItems])
+
+  // Efeito para carregar o nome de usuário do localStorage
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username')
+    if (storedUsername) {
+      setUsername(storedUsername)
+    }
+  }, [])
 
   // Função para lidar com o logout
   const handleLogout = useCallback(() => {
@@ -232,6 +244,44 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     return () => clearInterval(intervalId);
   }, [forceRefresh]);
 
+  // Função para lidar com os votos
+  const handleVote = async (mediaId: string, voteType: number) => {
+    if (!username) {
+      alert('Você precisa estar logado para votar.')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaId: mediaId.toString(), username, voteType }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        // Atualizar os dados localmente
+        mutate(
+          mediaItems?.map(item =>
+            item.id === mediaId
+              ? {
+                  ...item,
+                  vote_count: result.voteCount,
+                  user_vote: voteType,
+                }
+              : item
+          )
+        )
+        setUserScore(result.userScore)
+      } else {
+        throw new Error('Falha ao registrar o voto')
+      }
+    } catch (error) {
+      console.error('Erro ao votar:', error)
+      alert('Ocorreu um erro ao registrar seu voto. Por favor, tente novamente.')
+    }
+  }
+
   // Tratamento de erro na busca de mídia
   if (error) {
     console.error('Error fetching media:', error)
@@ -333,6 +383,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     onDelete={isAdmin ? () => handleDeleteMedia(item.id) : undefined}
                     preloadImage={preloadImage}
                     getCachedImage={getCachedImage}
+                    onVote={handleVote}
+                    username={username}
                   />
                 ))}
               </div>
@@ -360,17 +412,22 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       {showAdminLogin && (
         <AdminLogin onLogin={handleAdminLogin} onClose={() => setShowAdminLogin(false)} />
       )}
+      <div className="text-green-500">
+        Score do usuário: {userScore}
+      </div>
     </div>
   )
 }
 
 // Componente para exibir um item de mídia individual
-const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: { 
+const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, username }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void
   preloadImage: (src: string) => Promise<void>
   getCachedImage: (src: string) => string | null
+  onVote: (mediaId: string, voteType: number) => void
+  username: string | null
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
@@ -426,6 +483,31 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
         <p className="text-xs text-green-300">
           Uploaded on: {formatDate(item.created_at)}
         </p>
+        <div className="flex justify-between items-center mt-2">
+          <span className="text-sm text-green-400">Votos: {item.vote_count}</span>
+          <div className="flex space-x-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onVote(item.id, 1)
+              }}
+              className={`p-1 rounded ${item.user_vote === 1 ? 'bg-green-600' : 'bg-green-800'} hover:bg-green-700 transition-colors duration-300`}
+              disabled={!username}
+            >
+              <ThumbsUp size={16} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onVote(item.id, -1)
+              }}
+              className={`p-1 rounded ${item.user_vote === -1 ? 'bg-red-600' : 'bg-red-800'} hover:bg-red-700 transition-colors duration-300`}
+              disabled={!username}
+            >
+              <ThumbsDown size={16} />
+            </button>
+          </div>
+        </div>
       </div>
       {onDelete && (
         <button
