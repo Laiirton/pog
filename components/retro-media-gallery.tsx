@@ -439,16 +439,13 @@ const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { select
           className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
         >
           <div className="w-full max-w-4xl relative">
-            <button
-              onClick={onClose}
-              className="absolute -top-10 right-0 text-green-500 hover:text-green-300 transition-colors duration-200 bg-black bg-opacity-50 rounded-full p-2"
-              aria-label="Close"
-            >
-              <X size={24} />
-            </button>
             <div className="w-full aspect-video">
               {selectedMedia.type === 'video' ? (
-                <VideoPlayer src={getImageSrc(selectedMedia.src)} title={selectedMedia.title} />
+                <VideoPlayer 
+                  src={getImageSrc(selectedMedia.src)} 
+                  title={selectedMedia.title} 
+                  onClose={onClose}
+                />
               ) : (
                 <ImageFrame
                   src={getImageSrc(selectedMedia.src)}
