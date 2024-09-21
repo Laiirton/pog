@@ -46,11 +46,11 @@ export function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) 
         localStorage.setItem('username', data.username);
         onRegisterSuccess(data.token);
       } else {
-        setError(data.error || 'Falha no registro');
+        setError(data.error || 'Registration failed');
       }
     } catch (err) {
-      console.error('Erro durante o registro:', err);
-      setError('Ocorreu um erro inesperado');
+      console.error('Error during registration:', err);
+      setError('An unexpected error occurred');
     }
 
     setIsLoading(false);
@@ -66,10 +66,10 @@ export function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) 
         className="relative z-10 w-full max-w-md"
       >
         <form onSubmit={handleSubmit} className="bg-black bg-opacity-80 p-8 rounded-lg border-2 border-green-400 shadow-lg shadow-green-500/30">
-          <h2 className="text-3xl font-bold mb-6 text-green-400 text-center">Registro</h2>
+          <h2 className="text-3xl font-bold mb-6 text-green-400 text-center">Register</h2>
           {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
           <div className="mb-4 relative">
-            <label htmlFor="username" className="block text-green-300 mb-2">Usuário</label>
+            <label htmlFor="username" className="block text-green-300 mb-2">Username</label>
             <div className="relative">
               <Input
                 id="username"
@@ -77,14 +77,14 @@ export function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                placeholder="Digite seu usuário"
+                placeholder="Enter your username"
                 className="bg-black text-green-300 border-green-500 focus:border-green-300 pl-10"
               />
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500" size={18} />
             </div>
           </div>
           <div className="mb-6 relative">
-            <label htmlFor="password" className="block text-green-300 mb-2">Senha</label>
+            <label htmlFor="password" className="block text-green-300 mb-2">Password</label>
             <div className="relative">
               <Input
                 id="password"
@@ -92,7 +92,7 @@ export function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Digite sua senha"
+                placeholder="Enter your password"
                 className="bg-black text-green-300 border-green-500 focus:border-green-300 pl-10 pr-10"
               />
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500" size={18} />
@@ -110,12 +110,12 @@ export function Register({ onRegisterSuccess, onSwitchToLogin }: RegisterProps) 
             disabled={isLoading} 
             className="w-full bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
           >
-            {isLoading ? 'Registrando...' : 'Registrar'}
+            {isLoading ? 'Registering...' : 'Register'}
           </Button>
           <p className="text-sm text-green-400 mt-4 text-center">
-            Já tem uma conta?{' '}
+            Already have an account?{' '}
             <button onClick={onSwitchToLogin} className="text-blue-400 hover:underline">
-              Faça login aqui
+              Login here
             </button>
           </p>
         </form>
