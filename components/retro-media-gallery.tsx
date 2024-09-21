@@ -192,23 +192,23 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   }, [mutate])
 
   // Função para lidar com a exclusão de mídia
-  const handleDeleteMedia = async (id: string) => {
-    if (!isAdmin) return
-    if (confirm('Are you sure you want to delete this media?')) {
+  const handleDeleteMedia = async (fileId: string) => {
+    if (!isAdmin) return;
+    if (confirm('Tem certeza de que deseja excluir esta mídia?')) {
       try {
-        const response = await fetch(`/api/delete-media/${id}`, {
+        const response = await fetch(`/api/delete-media/${fileId}`, {
           method: 'DELETE',
           headers: { 'admin-token': adminToken },
-        })
-        const result = await response.json()
+        });
+        const result = await response.json();
         if (response.ok) {
-          console.log('Delete result:', result)
-          mutate()
+          console.log('Resultado da exclusão:', result);
+          mutate(); // Recarrega a lista de mídias
         } else {
-          console.error('Failed to delete media:', result)
+          console.error('Falha ao excluir mídia:', result);
         }
       } catch (error) {
-        console.error('Error deleting media:', error)
+        console.error('Erro ao excluir mídia:', error);
       }
     }
   }
