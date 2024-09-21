@@ -24,7 +24,13 @@ const fetcher = async (url: string) => {
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
-  return response.json()
+  const data = await response.json()
+  return data.map((item: any) => ({
+    ...item,
+    upvotes: item.upvotes || 0,
+    downvotes: item.downvotes || 0,
+    user_vote: item.user_vote || 0
+  }))
 }
 
 // Interface para definir a estrutura de um item de mídia
@@ -38,7 +44,7 @@ interface MediaItem {
   created_at: string
   upvotes: number
   downvotes: number
-  user_vote?: number // -1 para dislike, 1 para like, undefined para nenhum voto
+  user_vote?: number
 }
 
 // Função para formatar a data
@@ -71,11 +77,6 @@ const getImageSrc = (src: string) => {
 // Componente principal da galeria de mídia retrô
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
   // Estados e hooks para gerenciar os dados e o estado da aplicação
-  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    refreshInterval: 60000 // Recarrega a cada 1 minuto
-  })
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -93,6 +94,19 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [userScore, setUserScore] = useState(0)
 
   const { preloadImage, getCachedImage } = useImagePreloader()
+
+  // Função para buscar dados da API com o token do usuário
+  const fetcherWithToken = useCallback((url: string) => {
+    const userToken = localStorage.getItem('username')
+    const urlWithToken = `${url}${url.includes('?') ? '&' : '?'}userToken=${userToken}`
+    return fetcher(urlWithToken)
+  }, [])
+
+  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcherWithToken, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    refreshInterval: 60000 // Recarrega a cada 1 minuto
+  })
 
   // Efeito para carregar a lista de usuários
   useEffect(() => {
@@ -278,8 +292,11 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                   user_vote: result.userVote,
                 }
               : item
-          )
+          ),
+          false // Não revalidar imediatamente
         )
+        // Forçar uma atualização dos dados
+        mutate()
       } else {
         throw new Error('Falha ao registrar o voto')
       }
@@ -438,15 +455,12 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-
-  const thumbnailSrc = item.thumbnail || item.src
 
   useEffect(() => {
-    if (isHovered && !imageLoaded) {
-      preloadImage(thumbnailSrc).then(() => setImageLoaded(true)).catch(() => setImageError(true))
-    }
-  }, [isHovered, imageLoaded, thumbnailSrc, preloadImage])
+    preloadImage(item.thumbnail || item.src)
+      .then(() => setImageLoaded(true))
+      .catch(() => setImageError(true))
+  }, [item.thumbnail, item.src, preloadImage])
 
   return (
     <motion.div
@@ -454,13 +468,11 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
       whileHover={{ scale: 1.05, borderColor: '#00FF00' }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video">
         {!imageError ? (
           <Image
-            src={thumbnailSrc}
+            src={item.thumbnail || item.src}
             alt={item.title}
             layout="fill"
             objectFit="cover"
@@ -479,8 +491,6 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
             <span className="text-green-500">Loading...</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-        </div>
       </div>
       <div className="p-4">
         <h2 className="text-xl font-bold mb-2 glitch" data-text={item.title}>{item.title}</h2>
@@ -500,9 +510,9 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
             disabled={!username}
           >
             <ArrowBigUp size={20} />
-            <span className="ml-1">{item.upvotes || 0}</span>
+            <span className="ml-1">{item.upvotes}</span>
           </button>
-          <span className="text-sm font-bold">{(item.upvotes || 0) - (item.downvotes || 0)}</span>
+          <span className="text-sm font-bold">{item.upvotes - item.downvotes}</span>
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -511,7 +521,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
             className={`flex items-center p-1 rounded ${item.user_vote === -1 ? 'text-blue-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
             disabled={!username}
           >
-            <span className="mr-1">{item.downvotes || 0}</span>
+            <span className="mr-1">{item.downvotes}</span>
             <ArrowBigDown size={20} />
           </button>
         </div>
