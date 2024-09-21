@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-import { Play, Pause, Volume2, VolumeX, Maximize, Rewind, FastForward, Download } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Maximize, Rewind, FastForward, Download, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 
@@ -17,6 +17,7 @@ interface VideoPlayerProps {
   showDownloadButton?: boolean
   showFullscreenButton?: boolean
   showSkipButtons?: boolean
+  onClose?: () => void // Nova prop para lidar com o fechamento
 }
 
 export function VideoPlayer({
@@ -27,7 +28,8 @@ export function VideoPlayer({
   accentColor = '#059669',
   showDownloadButton = true,
   showFullscreenButton = true,
-  showSkipButtons = true
+  showSkipButtons = true,
+  onClose // Nova prop
 }: VideoPlayerProps) {
   // Estados para controlar o player de vídeo
   const [isPlaying, setIsPlaying] = useState(false)
@@ -184,8 +186,34 @@ export function VideoPlayer({
       className="w-full h-full bg-black rounded-lg overflow-hidden shadow-lg relative"
       onMouseMove={showControlsTemporarily}
       onMouseLeave={() => setShowControls(false)}
-      style={{ '--primary-color': primaryColor, '--secondary-color': secondaryColor, '--accent-color': accentColor } as React.CSSProperties}
+      style={{ 
+        '--primary-color': primaryColor, 
+        '--secondary-color': secondaryColor, 
+        '--accent-color': accentColor,
+        boxShadow: '0 0 10px rgba(255, 0, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.5), 0 0 30px rgba(0, 0, 255, 0.5)',
+        animation: 'rgb-border 5s linear infinite'
+      } as React.CSSProperties}
     >
+      <style jsx>{`
+        @keyframes rgb-border {
+          0% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.5), 0 0 30px rgba(0, 0, 255, 0.5); }
+          33% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.5), 0 0 20px rgba(0, 0, 255, 0.5), 0 0 30px rgba(255, 0, 0, 0.5); }
+          66% { box-shadow: 0 0 10px rgba(0, 0, 255, 0.5), 0 0 20px rgba(255, 0, 0, 0.5), 0 0 30px rgba(0, 255, 0, 0.5); }
+          100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.5), 0 0 30px rgba(0, 0, 255, 0.5); }
+        }
+      `}</style>
+      {/* Botão de fechar */}
+      {onClose && (
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onClose}
+          className="absolute top-2 right-2 text-[var(--primary-color)] hover:bg-[var(--secondary-color)] hover:bg-opacity-50 z-50"
+          aria-label="Fechar vídeo"
+        >
+          <X className="h-6 w-6" />
+        </Button>
+      )}
       {/* Indicador de carregamento */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
