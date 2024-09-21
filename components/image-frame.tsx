@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Download } from 'lucide-react'
+import { Download, User, Calendar, Info } from 'lucide-react'
 import Image from 'next/image'
 
 // Interface para as propriedades do componente ImageFrame
@@ -29,6 +29,7 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
   // Estados para controlar o carregamento e erro da imagem
   const [isLoading, setIsLoading] = useState(!preloaded)
   const [imageError, setImageError] = useState(false)
+  const [showInfo, setShowInfo] = useState(false)
   const fullImageSrc = getImageSrc(src)
   const cachedImage = getCachedImage(fullImageSrc)
 
@@ -101,22 +102,46 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
             </div>
           )}
         </div>
-        {/* Informações da imagem e botão de download */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4 text-green-500">
-          <h2 className="text-xl font-bold mb-2 text-green-400 truncate">{alt}</h2>
-          <p className="text-sm text-green-300">
-            Uploaded by: <span className="text-green-400 font-bold">{username || 'Unknown'}</span>
-          </p>
-          <p className="text-xs mt-1 text-green-300">
-            Uploaded on: <span className="text-green-400">{new Date(createdAt).toLocaleString()}</span>
-          </p>
-          <button
-            onClick={handleDownload}
-            className="mt-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-black font-bold py-2 px-4 rounded transition-all duration-300 flex items-center"
-          >
-            <Download size={20} className="mr-2" />
-            Download
-          </button>
+        {/* Informações da imagem e botões */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
+          <div className="flex justify-between items-end">
+            <div className="flex-grow">
+              <h2 className="text-xl font-bold mb-2 text-green-400 truncate">{alt}</h2>
+              {showInfo && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="space-y-1"
+                >
+                  <p className="text-sm text-green-300 flex items-center">
+                    <User size={14} className="mr-2" />
+                    <span className="text-green-400 font-semibold">{username || 'Unknown'}</span>
+                  </p>
+                  <p className="text-xs text-green-300 flex items-center">
+                    <Calendar size={14} className="mr-2" />
+                    <span className="text-green-400">{new Date(createdAt).toLocaleString()}</span>
+                  </p>
+                </motion.div>
+              )}
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setShowInfo(!showInfo)}
+                className="text-green-500 hover:text-green-400 transition-colors duration-300"
+                aria-label="Toggle image info"
+              >
+                <Info size={20} />
+              </button>
+              <button
+                onClick={handleDownload}
+                className="text-green-500 hover:text-green-400 transition-colors duration-300"
+                aria-label="Download image"
+              >
+                <Download size={20} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
