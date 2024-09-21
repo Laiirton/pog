@@ -53,11 +53,11 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
         onLoginSuccess(data.token);
       } else {
         // Define a mensagem de erro caso o login falhe
-        setError(data.error || 'Falha no login');
+        setError(data.error || 'Login failed');
       }
     } catch (err) {
-      console.error('Erro durante o login:', err);
-      setError('Ocorreu um erro inesperado');
+      console.error('Error during login:', err);
+      setError('An unexpected error occurred');
     }
 
     setIsLoading(false);
@@ -76,7 +76,7 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
           <h2 className="text-3xl font-bold mb-6 text-green-400 text-center">Login</h2>
           {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
           <div className="mb-4 relative">
-            <label htmlFor="username" className="block text-green-300 mb-2">Usuário</label>
+            <label htmlFor="username" className="block text-green-300 mb-2">Username</label>
             <div className="relative">
               <Input
                 id="username"
@@ -84,14 +84,14 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                placeholder="Digite seu usuário"
+                placeholder="Enter your username"
                 className="bg-black text-green-300 border-green-500 focus:border-green-300 pl-10"
               />
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500" size={18} />
             </div>
           </div>
           <div className="mb-6 relative">
-            <label htmlFor="password" className="block text-green-300 mb-2">Senha</label>
+            <label htmlFor="password" className="block text-green-300 mb-2">Password</label>
             <div className="relative">
               <Input
                 id="password"
@@ -99,7 +99,7 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Digite sua senha"
+                placeholder="Enter your password"
                 className="bg-black text-green-300 border-green-500 focus:border-green-300 pl-10 pr-10"
               />
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500" size={18} />
@@ -117,12 +117,12 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             disabled={isLoading} 
             className="w-full bg-green-600 hover:bg-green-700 text-black font-bold py-2 px-4 rounded transition-colors duration-300"
           >
-            {isLoading ? 'Entrando...' : 'Entrar'}
+            {isLoading ? 'Logging in...' : 'Login'}
           </Button>
           <p className="text-sm text-green-400 mt-4 text-center">
-            Não tem uma conta?{' '}
+            Don't have an account?{' '}
             <button onClick={onSwitchToRegister} className="text-blue-400 hover:underline">
-              Registre-se aqui
+              Register here
             </button>
           </p>
         </form>
