@@ -18,9 +18,11 @@ oauth2Client.setCredentials({
   refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    const url = new URL(request.url);
+    const userToken = url.searchParams.get('userToken');
 
     const response = await drive.files.list({
       q: `'${process.env.GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed = false`,
@@ -36,7 +38,7 @@ export async function GET() {
     // Buscar informações adicionais do banco de dados usando Supabase
     const { data: dbResult, error } = await supabase
       .from('media_uploads')
-      .select('file_id, username, vote_count')
+      .select('file_id, username, upvotes, downvotes')
       .in('file_id', files.map(file => file.id));
 
     if (error) {
@@ -45,6 +47,21 @@ export async function GET() {
     }
 
     const fileInfoMap = new Map(dbResult.map(row => [row.file_id, row]));
+
+    // Buscar votos do usuário, se um token de usuário for fornecido
+    let userVotes = {};
+    if (userToken) {
+      const { data: votesData, error: votesError } = await supabase
+        .from('user_votes')
+        .select('media_id, vote_type')
+        .eq('user_token', userToken);
+
+      if (votesError) {
+        console.error('Error fetching user votes:', votesError);
+      } else {
+        userVotes = Object.fromEntries(votesData.map(vote => [vote.media_id, vote.vote_type]));
+      }
+    }
 
     const mediaItems = await Promise.all(files.map(async (file) => {
       try {
@@ -58,7 +75,9 @@ export async function GET() {
           thumbnail: file.thumbnailLink || `https://drive.google.com/thumbnail?id=${file.id}`,
           username: dbInfo?.username || 'Unknown',
           created_at: file.createdTime,
-          vote_count: dbInfo?.vote_count || 0,
+          upvotes: dbInfo?.upvotes || 0,
+          downvotes: dbInfo?.downvotes || 0,
+          user_vote: userVotes[file.id] || 0,
         };
       } catch (error) {
         console.error(`File ${file.id} not found or inaccessible`);
