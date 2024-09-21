@@ -15,16 +15,36 @@ export async function GET() {
   try {
     // Consultando o banco de dados para obter o ranking de usuários
     const { data, error } = await supabase
-      .from('usernames')
-      .select('username, upload_count')
-      .order('upload_count', { ascending: false }) // Ordenando por contagem de uploads em ordem decrescente
-      .limit(10); // Limitando o resultado aos 10 primeiros
+      .from('media_uploads')
+      .select('username, file_id, upvotes, downvotes')
 
     // Se houver um erro na consulta, lança uma exceção
     if (error) throw error;
 
+    // Agregar os dados por usuário
+    const userStats = data.reduce((acc, item) => {
+      if (!acc[item.username]) {
+        acc[item.username] = { upload_count: 0, upvotes: 0, downvotes: 0 };
+      }
+      acc[item.username].upload_count++;
+      acc[item.username].upvotes += item.upvotes || 0;
+      acc[item.username].downvotes += item.downvotes || 0;
+      return acc;
+    }, {});
+
+    // Converter para array e ordenar
+    const ranking = Object.entries(userStats)
+      .map(([username, stats]) => ({
+        username,
+        upload_count: stats.upload_count,
+        upvotes: stats.upvotes,
+        downvotes: stats.downvotes
+      }))
+      .sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes) || b.upload_count - a.upload_count)
+      .slice(0, 10); // Pegar os top 10
+
     // Retorna os dados como resposta JSON
-    return NextResponse.json(data);
+    return NextResponse.json(ranking);
   } catch (error) {
     // Em caso de erro, registra no console e retorna uma resposta de erro
     console.error('Error fetching user ranking:', error);
