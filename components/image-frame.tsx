@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Download, User, Calendar, Info } from 'lucide-react'
+import { Download, User, Calendar, Info, X } from 'lucide-react'
 import Image from 'next/image'
+import { Button } from "@/components/ui/button" // Adicione esta importação
 
 // Interface para as propriedades do componente ImageFrame
 interface ImageFrameProps {
@@ -13,6 +14,7 @@ interface ImageFrameProps {
   thumbnail: string
   preloaded?: boolean
   getCachedImage: (src: string) => string | null
+  onClose: () => void // Adicione esta linha
 }
 
 // Função para obter a URL da imagem, tratando links do Google Drive
@@ -25,7 +27,7 @@ const getImageSrc = (src: string): string => {
 }
 
 // Componente principal ImageFrame
-export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded = false, getCachedImage }: ImageFrameProps) {
+export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded = false, getCachedImage, onClose }: ImageFrameProps) {
   // Estados para controlar o carregamento e erro da imagem
   const [isLoading, setIsLoading] = useState(!preloaded)
   const [imageError, setImageError] = useState(false)
@@ -76,6 +78,18 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
     >
       {/* Gradiente de fundo animado */}
       <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 animate-gradient-x"></div>
+      
+      {/* Botão de fechar */}
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={onClose}
+        className="absolute top-2 right-2 text-green-500 hover:bg-green-900 hover:bg-opacity-50 z-50"
+        aria-label="Fechar imagem"
+      >
+        <X className="h-6 w-6" />
+      </Button>
+
       <div className="absolute inset-[2px] bg-black rounded-lg overflow-hidden">
         <div className="relative w-full h-full aspect-square">
           {/* Indicador de carregamento */}
