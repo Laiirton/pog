@@ -16,31 +16,31 @@ import { FilterComponentsComponent } from './filter-components'
 import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 import { LoadingAnimation } from './loading-animation'
-import { useImagePreloader } from '../hooks/useImagePreloader';
+import { useImagePreloader } from '../hooks/useImagePreloader'
 
 // Função para buscar dados da API
 const fetcher = async (url: string) => {
-  const response = await fetch(url);
+  const response = await fetch(url)
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(`HTTP error! status: ${response.status}`)
   }
-  return response.json();
+  return response.json()
 }
 
 // Interface para definir a estrutura de um item de mídia
 interface MediaItem {
-  id: string;
-  title: string;
-  type: 'video' | 'image';
-  src: string;
-  thumbnail: string;
-  username: string;
-  created_at: string;
+  id: string
+  title: string
+  type: 'video' | 'image'
+  src: string
+  thumbnail: string
+  username: string
+  created_at: string
 }
 
 // Função para formatar a data
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
+  const date = new Date(dateString)
   return date.toLocaleString('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -48,94 +48,96 @@ const formatDate = (dateString: string) => {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
-  });
+  })
 }
 
 // Interface para as props do componente RetroMediaGalleryComponent
 interface RetroMediaGalleryComponentProps {
-  onLogout: () => void;
+  onLogout: () => void
 }
 
 // Função para obter a URL da imagem, tratando links do Google Drive
 const getImageSrc = (src: string) => {
   if (src.includes('drive.google.com')) {
-    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1];
-    return fileId ? `/api/file/${fileId}` : src;
+    const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1]
+    return fileId ? `/api/file/${fileId}` : src
   }
-  return src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_BASE_URL}${src}`;
-};
+  return src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_BASE_URL}${src}`
+}
 
 // Componente principal da galeria de mídia retrô
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
   // Estados e hooks para gerenciar os dados e o estado da aplicação
-  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher);
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
-  const [showUpload, setShowUpload] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminToken, setAdminToken] = useState('');
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [selectedType, setSelectedType] = useState('all');
-  const [selectedUser, setSelectedUser] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [allUsers, setAllUsers] = useState<string[]>([]);
-  const [title, setTitle] = useState(''); // Estado para o título
-  const [date, setDate] = useState<Date | null>(null); // Estado para a data
+  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher)
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
+  const [showUpload, setShowUpload] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminToken, setAdminToken] = useState('')
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const [selectedType, setSelectedType] = useState('all')
+  const [selectedUser, setSelectedUser] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [startDate, setStartDate] = useState<Date | null>(null)
+  const [endDate, setEndDate] = useState<Date | null>(null)
+  const [allUsers, setAllUsers] = useState<string[]>([])
+  const [title, setTitle] = useState('') // Estado para o título
+  const [date, setDate] = useState<Date | null>(null) // Estado para a data
 
-  const { preloadImage, getCachedImage } = useImagePreloader();
+  const { preloadImage, getCachedImage } = useImagePreloader()
 
   // Efeito para carregar a lista de usuários
   useEffect(() => {
     if (mediaItems) {
-      const users = Array.from(new Set(mediaItems.map((item: MediaItem) => item.username).filter(Boolean) as string[]));
-      setAllUsers(users);
+      const users = Array.from(new Set(mediaItems.map((item: MediaItem) => item.username).filter(Boolean) as string[]))
+      setAllUsers(users)
     }
-  }, [mediaItems]);
+  }, [mediaItems])
 
   // Efeito para verificar se há um token de admin armazenado
   useEffect(() => {
-    const storedToken = localStorage.getItem('adminToken');
+    const storedToken = localStorage.getItem('adminToken')
     if (storedToken) {
-      setIsAdmin(true);
-      setAdminToken(storedToken);
+      setIsAdmin(true)
+      setAdminToken(storedToken)
     }
-  }, []);
+  }, [])
 
   // Efeito para pré-carregar imagens
   useEffect(() => {
     if (mediaItems) {
-      mediaItems.forEach(item => {
-        if (item.type === 'image') {
-          preloadImage(getImageSrc(item.src));
+      mediaItems.forEach(async (item) => {
+        if (item.thumbnail) {
+          preloadImage(item.thumbnail)
+        } else if (item.type === 'image') {
+          preloadImage(getImageSrc(item.src))
         }
-      });
+      })
     }
-  }, [mediaItems, preloadImage]);
+  }, [mediaItems, preloadImage])
 
   // Filtragem dos itens de mídia baseada nos filtros aplicados
   const filteredMediaItems = useMemo(() => {
-    if (!mediaItems) return [];
+    if (!mediaItems) return []
     return mediaItems.filter(item => 
       (selectedType === 'all' || item.type === selectedType) &&
       (!selectedUser || item.username === selectedUser) &&
       (!searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (!startDate || new Date(item.created_at) >= startDate) &&
       (!endDate || new Date(item.created_at) <= endDate)
-    );
-  }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, endDate]);
+    )
+  }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, endDate])
 
   // Função para lidar com o sucesso do upload
   const handleUploadSuccess = useCallback(() => {
-    mutate();
-    setShowUpload(false);
-  }, [mutate]);
+    mutate()
+    setShowUpload(false)
+  }, [mutate])
 
   // Função para lidar com o logout
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('username');
-    onLogout();
-  }, [onLogout]);
+    localStorage.removeItem('username')
+    onLogout()
+  }, [onLogout])
 
   // Função para lidar com o login do admin
   const handleAdminLogin = async (username: string, password: string) => {
@@ -144,53 +146,53 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
-      });
+      })
       if (response.ok) {
-        const { token } = await response.json();
-        setIsAdmin(true);
-        setAdminToken(token);
-        localStorage.setItem('adminToken', token);
-        setShowAdminLogin(false);
+        const { token } = await response.json()
+        setIsAdmin(true)
+        setAdminToken(token)
+        localStorage.setItem('adminToken', token)
+        setShowAdminLogin(false)
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Unknown error');
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Unknown error')
       }
     } catch (error) {
-      console.error('Error during admin login:', error);
+      console.error('Error during admin login:', error)
     }
-  };
+  }
 
   // Função para lidar com a exclusão de mídia
   const handleDeleteMedia = async (id: string) => {
-    if (!isAdmin) return;
+    if (!isAdmin) return
     if (confirm('Are you sure you want to delete this media?')) {
       try {
         const response = await fetch(`/api/delete-media/${id}`, {
           method: 'DELETE',
           headers: { 'admin-token': adminToken },
-        });
-        const result = await response.json();
+        })
+        const result = await response.json()
         if (response.ok) {
-          console.log('Delete result:', result);
-          mutate();
+          console.log('Delete result:', result)
+          mutate()
         } else {
-          console.error('Failed to delete media:', result);
+          console.error('Failed to delete media:', result)
         }
       } catch (error) {
-        console.error('Error deleting media:', error);
+        console.error('Error deleting media:', error)
       }
     }
-  };
+  }
 
   // Tratamento de erro na busca de mídia
   if (error) {
-    console.error('Error fetching media:', error);
-    return <div>Error loading media. Please try again later.</div>;
+    console.error('Error fetching media:', error)
+    return <div>Error loading media. Please try again later.</div>
   }
 
   // Exibição de loading enquanto os dados são carregados
   if (!mediaItems) {
-    return <LoadingAnimation />;
+    return <LoadingAnimation />
   }
 
   // Renderização do componente principal
@@ -318,21 +320,21 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: { 
   item: MediaItem; 
   onClick: () => void; 
-  onDelete?: () => void;
-  preloadImage: (src: string) => Promise<void>;
-  getCachedImage: (src: string) => string | null;
+  onDelete?: () => void
+  preloadImage: (src: string) => Promise<void>
+  getCachedImage: (src: string) => string | null
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
-  const thumbnailSrc = getImageSrc(item.thumbnail);
+  const thumbnailSrc = item.thumbnail || item.src
 
   useEffect(() => {
     if (isHovered && !imageLoaded) {
-      preloadImage(thumbnailSrc).then(() => setImageLoaded(true)).catch(() => setImageError(true));
+      preloadImage(thumbnailSrc).then(() => setImageLoaded(true)).catch(() => setImageError(true))
     }
-  }, [isHovered, imageLoaded, thumbnailSrc, preloadImage]);
+  }, [isHovered, imageLoaded, thumbnailSrc, preloadImage])
 
   return (
     <motion.div
@@ -383,8 +385,8 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
       {onDelete && (
         <button
           onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
+            e.stopPropagation()
+            onDelete()
           }}
           className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors duration-300"
           aria-label="Delete media"
@@ -434,5 +436,5 @@ const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { select
         </motion.div>
       )}
     </AnimatePresence>
-  );
-};
+  )
+}
