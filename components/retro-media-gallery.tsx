@@ -62,7 +62,7 @@ const getImageSrc = (src: string) => {
     const fileId = src.match(/\/d\/(.+?)\/view/)?.[1] || src.match(/id=(.+?)(&|$)/)?.[1];
     return fileId ? `/api/file/${fileId}` : src;
   }
-  return src;
+  return src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_BASE_URL}${src}`;
 };
 
 // Componente principal da galeria de mídia retrô
@@ -326,9 +326,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const thumbnailSrc = item.thumbnail.startsWith('http') 
-    ? item.thumbnail 
-    : `/api/proxy-image?id=${item.id}`;
+  const thumbnailSrc = getImageSrc(item.thumbnail);
 
   useEffect(() => {
     if (isHovered && !imageLoaded) {
