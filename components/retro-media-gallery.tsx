@@ -267,35 +267,24 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
 
     try {
-      const userToken = localStorage.getItem('username') // Pegando o token do localStorage
+      const userToken = localStorage.getItem('username')
       if (!userToken) {
-        alert('Token de usuário não encontrado. Faça login novamente.')
+        alert('Token de usuário não encontrado. Por favor, faça login novamente.')
         return
       }
 
       const response = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaId: mediaId.toString(), userToken, voteType }),
+        body: JSON.stringify({ mediaId, userToken, voteType }),
       })
 
       if (response.ok) {
         const result = await response.json()
-        // Atualizar os dados localmente
-        mutate(
-          mediaItems?.map(item =>
-            item.id === mediaId
-              ? {
-                  ...item,
-                  upvotes: result.upvotes,
-                  downvotes: result.downvotes,
-                  user_vote: result.userVote,
-                }
-              : item
-          )
-        )
+        mutate()
       } else {
-        throw new Error('Falha ao registrar o voto')
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Falha ao registrar o voto')
       }
     } catch (error) {
       console.error('Erro ao votar:', error)
@@ -501,9 +490,9 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onVote(item.id, item.user_vote === 1 ? 0 : 1)
+              onVote(item.id, 1)
             }}
-            className={`flex items-center p-1 rounded ${item.user_vote === 1 ? 'text-orange-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            className={`flex items-center p-1 rounded text-green-500 hover:bg-green-900 transition-colors duration-300`}
             disabled={!username}
           >
             <ArrowBigUp size={20} />
@@ -512,9 +501,9 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onVote(item.id, item.user_vote === -1 ? 0 : -1)
+              onVote(item.id, -1)
             }}
-            className={`flex items-center p-1 rounded ${item.user_vote === -1 ? 'text-blue-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            className={`flex items-center p-1 rounded text-green-500 hover:bg-green-900 transition-colors duration-300`}
             disabled={!username}
           >
             <span className="mr-1">{item.downvotes}</span>
