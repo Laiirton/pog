@@ -397,9 +397,6 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage }: {
           </div>
         )}
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-          <span className="text-green-500 text-lg font-bold glitch" data-text={item.type === 'video' ? 'View video' : 'View image'}>
-            {item.type === 'video' ? 'View video' : 'View image'}
-          </span>
         </div>
       </div>
       <div className="p-4">
