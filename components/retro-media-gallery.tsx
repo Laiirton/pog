@@ -19,13 +19,13 @@ import { LoadingAnimation } from './loading-animation'
 import { useImagePreloader } from '../hooks/useImagePreloader'
 
 // Função para buscar dados da API
-const fetcher = async (url: string) => {
+const fetcher = async (url: string): Promise<MediaItem[]> => {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
   const data = await response.json()
-  return data.map((item: any) => ({
+  return data.map((item: MediaItem) => ({
     ...item,
     upvotes: item.upvotes || 0,
     downvotes: item.downvotes || 0,
