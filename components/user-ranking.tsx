@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Upload } from 'lucide-react';
+import { Trophy, ArrowBigUp, ArrowBigDown } from 'lucide-react';
 
 // Define a interface para os itens do ranking
 interface RankingItem {
   username: string;
   upload_count: number;
+  upvotes: number;
+  downvotes: number;
 }
 
 export function UserRanking() {
@@ -49,7 +51,7 @@ export function UserRanking() {
       <ul className="space-y-3 relative z-10">
         {ranking.length > 0 ? (
           // Mapeia os 5 primeiros itens do ranking
-          ranking.slice(0, 5).map((item, index) => (
+          ranking.map((item, index) => (
             // Cada item do ranking com animação
             <motion.li
               key={item.username}
@@ -64,11 +66,17 @@ export function UserRanking() {
                 {/* Nome do usuário */}
                 <span className="truncate">{item.username}</span>
               </span>
-              {/* Contagem de uploads */}
-              <span className="font-bold text-sm bg-orange-500 text-black px-2 py-1 rounded-full shadow-md flex items-center">
-                <Upload className="mr-1" size={14} />
-                {item.upload_count}
-              </span>
+              {/* Contagem de upvotes e downvotes */}
+              <div className="flex items-center space-x-2">
+                <span className="font-bold text-sm bg-green-500 text-black px-2 py-1 rounded-full shadow-md flex items-center">
+                  <ArrowBigUp className="mr-1" size={14} />
+                  {item.upvotes}
+                </span>
+                <span className="font-bold text-sm bg-red-500 text-black px-2 py-1 rounded-full shadow-md flex items-center">
+                  <ArrowBigDown className="mr-1" size={14} />
+                  {item.downvotes}
+                </span>
+              </div>
             </motion.li>
           ))
         ) : (
