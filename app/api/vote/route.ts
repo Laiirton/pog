@@ -78,7 +78,13 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleVote(user: any, mediaId: string, initialVoteType: number) {
+interface User {
+  id: string;
+  username: string;
+  votes: Record<string, number>;
+}
+
+async function handleVote(user: User, mediaId: string, initialVoteType: number) {
   const votes = user.votes || {}
   const currentVote = votes[mediaId] || 0
   let voteType = initialVoteType
