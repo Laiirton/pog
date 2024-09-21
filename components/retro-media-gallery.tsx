@@ -93,14 +93,72 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [mediaItems])
 
+  // Função para lidar com o logout
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('username')
+    localStorage.removeItem('adminToken') // Remover o token de admin
+    setIsAdmin(false) // Resetar o estado de admin
+    setAdminToken('') // Limpar o token de admin no estado
+    onLogout()
+  }, [onLogout])
+
   // Efeito para verificar se há um token de admin armazenado
   useEffect(() => {
-    const storedToken = localStorage.getItem('adminToken')
-    if (storedToken) {
-      setIsAdmin(true)
-      setAdminToken(storedToken)
+    const checkAdminStatus = async () => {
+      const storedToken = localStorage.getItem('adminToken')
+      if (storedToken) {
+        try {
+          // Verificar se o token ainda é válido
+          const response = await fetch('/api/verify-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: storedToken }),
+          })
+          if (response.ok) {
+            setIsAdmin(true)
+            setAdminToken(storedToken)
+          } else {
+            // Se o token não for válido, limpar
+            localStorage.removeItem('adminToken')
+            setIsAdmin(false)
+            setAdminToken('')
+          }
+        } catch (error) {
+          console.error('Error verifying admin token:', error)
+          localStorage.removeItem('adminToken')
+          setIsAdmin(false)
+          setAdminToken('')
+        }
+      }
     }
+
+    checkAdminStatus()
   }, [])
+
+  // Função para lidar com o login do admin
+  const handleAdminLogin = async (username: string, password: string) => {
+    try {
+      const response = await fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+      if (response.ok) {
+        const { token } = await response.json()
+        setIsAdmin(true)
+        setAdminToken(token)
+        localStorage.setItem('adminToken', token)
+        setShowAdminLogin(false)
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Unknown error')
+      }
+    } catch (error) {
+      console.error('Error during admin login:', error)
+      setIsAdmin(false)
+      setAdminToken('')
+    }
+  }
 
   // Efeito para pré-carregar imagens
   useEffect(() => {
@@ -132,35 +190,6 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     mutate()
     setShowUpload(false)
   }, [mutate])
-
-  // Função para lidar com o logout
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('username')
-    onLogout()
-  }, [onLogout])
-
-  // Função para lidar com o login do admin
-  const handleAdminLogin = async (username: string, password: string) => {
-    try {
-      const response = await fetch('/api/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-      if (response.ok) {
-        const { token } = await response.json()
-        setIsAdmin(true)
-        setAdminToken(token)
-        localStorage.setItem('adminToken', token)
-        setShowAdminLogin(false)
-      } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Unknown error')
-      }
-    } catch (error) {
-      console.error('Error during admin login:', error)
-    }
-  }
 
   // Função para lidar com a exclusão de mídia
   const handleDeleteMedia = async (id: string) => {
