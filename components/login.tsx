@@ -120,7 +120,7 @@ export function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps) {
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
           <p className="text-sm text-green-400 mt-4 text-center">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <button onClick={onSwitchToRegister} className="text-blue-400 hover:underline">
               Register here
             </button>
