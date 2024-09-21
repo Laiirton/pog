@@ -6,7 +6,7 @@ import useSWR from 'swr'
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LogOut, Trash2, Upload, User, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
@@ -36,7 +36,8 @@ interface MediaItem {
   thumbnail: string
   username: string
   created_at: string
-  vote_count: number
+  upvotes: number
+  downvotes: number
   user_vote?: number // -1 para dislike, 1 para like, undefined para nenhum voto
 }
 
@@ -272,13 +273,13 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             item.id === mediaId
               ? {
                   ...item,
-                  vote_count: result.voteCount,
-                  user_vote: voteType,
+                  upvotes: result.upvotes,
+                  downvotes: result.downvotes,
+                  user_vote: result.userVote,
                 }
               : item
           )
         )
-        setUserScore(result.userScore)
       } else {
         throw new Error('Falha ao registrar o voto')
       }
@@ -490,29 +491,29 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           Uploaded on: {formatDate(item.created_at)}
         </p>
         <div className="flex justify-between items-center mt-2">
-          <span className="text-sm text-green-400">Votos: {item.vote_count}</span>
-          <div className="flex space-x-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onVote(item.id, 1)
-              }}
-              className={`p-1 rounded ${item.user_vote === 1 ? 'bg-green-600' : 'bg-green-800'} hover:bg-green-700 transition-colors duration-300`}
-              disabled={!username}
-            >
-              <ThumbsUp size={16} />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onVote(item.id, -1)
-              }}
-              className={`p-1 rounded ${item.user_vote === -1 ? 'bg-red-600' : 'bg-red-800'} hover:bg-red-700 transition-colors duration-300`}
-              disabled={!username}
-            >
-              <ThumbsDown size={16} />
-            </button>
-          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onVote(item.id, item.user_vote === 1 ? 0 : 1)
+            }}
+            className={`flex items-center p-1 rounded ${item.user_vote === 1 ? 'text-orange-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            disabled={!username}
+          >
+            <ArrowBigUp size={20} />
+            <span className="ml-1">{item.upvotes || 0}</span>
+          </button>
+          <span className="text-sm font-bold">{(item.upvotes || 0) - (item.downvotes || 0)}</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onVote(item.id, item.user_vote === -1 ? 0 : -1)
+            }}
+            className={`flex items-center p-1 rounded ${item.user_vote === -1 ? 'text-blue-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            disabled={!username}
+          >
+            <span className="mr-1">{item.downvotes || 0}</span>
+            <ArrowBigDown size={20} />
+          </button>
         </div>
       </div>
       {onDelete && (

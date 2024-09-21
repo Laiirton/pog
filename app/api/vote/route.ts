@@ -18,7 +18,8 @@ interface JwtPayload {
 }
 
 interface MediaUpload {
-  vote_count: number
+  upvotes: number
+  downvotes: number
 }
 
 export async function POST(request: Request) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     console.log('Corpo da requisição:', body)
 
-    const { mediaId, userToken, voteType } = body
+    const { mediaId, userToken, voteType: initialVoteType } = body
 
     if (!mediaId) {
       return NextResponse.json({ message: 'mediaId é obrigatório' }, { status: 400 })
@@ -34,27 +35,22 @@ export async function POST(request: Request) {
     if (!userToken) {
       return NextResponse.json({ message: 'userToken é obrigatório' }, { status: 400 })
     }
-    if (voteType !== 1 && voteType !== -1) {
-      return NextResponse.json({ message: 'voteType deve ser 1 ou -1' }, { status: 400 })
+    if (initialVoteType !== 1 && initialVoteType !== -1 && initialVoteType !== 0) {
+      return NextResponse.json({ message: 'voteType deve ser 1, -1 ou 0' }, { status: 400 })
     }
 
     let username: string
     try {
       const decoded = jwt.verify(userToken, JWT_SECRET) as JwtPayload
       username = decoded.username
-      console.log('Token decodificado com sucesso:', decoded)
     } catch (error) {
       console.error('Erro ao decodificar o token:', error)
-      if (error instanceof Error) {
-        return NextResponse.json({ message: 'Token inválido', error: error.message }, { status: 401 })
-      } else {
-        return NextResponse.json({ message: 'Token inválido', error: 'Erro desconhecido' }, { status: 401 })
-      }
+      return NextResponse.json({ message: 'Token inválido' }, { status: 401 })
     }
 
     let { data: user, error: userError } = await supabase
       .from('usernames')
-      .select('id, username, score, votes')
+      .select('id, username, votes')
       .eq('username', username)
       .single()
 
@@ -62,7 +58,7 @@ export async function POST(request: Request) {
       if (userError.code === 'PGRST116') {
         const { data: newUser, error: createError } = await supabase
           .from('usernames')
-          .insert({ username, score: 0, votes: {} })
+          .insert({ username, votes: {} })
           .select()
           .single()
 
@@ -77,91 +73,67 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 })
     }
 
-    console.log('Usuário encontrado:', user)
-
     const votes = user.votes || {}
     const currentVote = votes[mediaId] || 0
-    const scoreDiff = voteType - currentVote
+    let voteType = initialVoteType
 
-    votes[mediaId] = voteType
-    const newScore = user.score + scoreDiff
+    // Se o voto atual é igual ao novo voto, remova o voto
+    if (currentVote === voteType) {
+      delete votes[mediaId]
+      voteType = 0 // Definir voteType como 0 para remover o voto
+    } else {
+      votes[mediaId] = voteType
+    }
 
     const { error: updateUserError } = await supabase
       .from('usernames')
-      .update({ votes, score: newScore })
+      .update({ votes })
       .eq('id', user.id)
 
-    if (updateUserError) {
-      console.error('Erro ao atualizar usuário:', updateUserError)
-      throw updateUserError
-    }
-
-    console.log('Atualizando contagem de votos da mídia')
-    console.log('mediaId:', mediaId)
-    console.log('scoreDiff:', scoreDiff)
+    if (updateUserError) throw updateUserError
 
     try {
-      // Primeiro, vamos obter o valor atual de vote_count
       const { data: currentMedia, error: getCurrentError } = await supabase
         .from('media_uploads')
-        .select('vote_count')
+        .select('upvotes, downvotes')
         .eq('file_id', mediaId)
         .single()
 
-      if (getCurrentError) {
-        console.error('Erro ao obter contagem atual de votos:', getCurrentError)
-        throw getCurrentError
-      }
+      if (getCurrentError) throw getCurrentError
+      if (!currentMedia) throw new Error('Mídia não encontrada')
 
-      if (!currentMedia) {
-        throw new Error('Mídia não encontrada')
-      }
+      let newUpvotes = currentMedia.upvotes || 0
+      let newDownvotes = currentMedia.downvotes || 0
 
-      // Agora, vamos calcular o novo valor de vote_count
-      const newVoteCount = (currentMedia.vote_count || 0) + scoreDiff
+      // Remover o voto anterior
+      if (currentVote === 1) newUpvotes--
+      if (currentVote === -1) newDownvotes--
 
-      // Em seguida, atualizamos diretamente o valor de vote_count
+      // Adicionar o novo voto
+      if (voteType === 1) newUpvotes++
+      if (voteType === -1) newDownvotes++
+
       const { data: updatedMedia, error: updateMediaError } = await supabase
         .from('media_uploads')
-        .update({ vote_count: newVoteCount })
+        .update({ upvotes: newUpvotes, downvotes: newDownvotes })
         .eq('file_id', mediaId)
-        .select('vote_count')
+        .select('upvotes, downvotes')
         .single()
 
-      if (updateMediaError) {
-        console.error('Erro ao atualizar mídia:', updateMediaError)
-        throw updateMediaError
-      }
-
-      console.log('Mídia atualizada:', updatedMedia)
+      if (updateMediaError) throw updateMediaError
 
       return NextResponse.json({ 
         message: 'Voto registrado com sucesso',
-        voteCount: updatedMedia.vote_count,
-        userScore: newScore
+        upvotes: updatedMedia.upvotes,
+        downvotes: updatedMedia.downvotes,
+        userVote: voteType
       })
     } catch (error) {
-      console.error('Erro detalhado ao atualizar mídia:', error)
-      if (error instanceof Error) {
-        return NextResponse.json({ message: 'Erro interno do servidor', error: error.message }, { status: 500 })
-      } else {
-        return NextResponse.json({ message: 'Erro interno do servidor', error: 'Erro desconhecido' }, { status: 500 })
-      }
+      console.error('Erro ao atualizar mídia:', error)
+      return NextResponse.json({ message: 'Erro ao atualizar mídia' }, { status: 500 })
     }
-
-    console.log('Voto registrado com sucesso:', { voteCount: updatedMedia.vote_count, userScore: newScore })
-
-    return NextResponse.json({ 
-      message: 'Voto registrado com sucesso',
-      voteCount: updatedMedia.vote_count,
-      userScore: newScore
-    })
   } catch (error) {
-    console.error('Erro detalhado ao processar voto:', error)
-    if (error instanceof Error) {
-      return NextResponse.json({ message: 'Erro interno do servidor', error: error.message }, { status: 500 })
-    } else {
-      return NextResponse.json({ message: 'Erro interno do servidor', error: 'Erro desconhecido' }, { status: 500 })
-    }
+    console.error('Erro ao processar voto:', error)
+    return NextResponse.json({ message: 'Erro interno do servidor' }, { status: 500 })
   }
 }
