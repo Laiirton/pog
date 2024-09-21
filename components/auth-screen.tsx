@@ -38,7 +38,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         <Login onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setIsLogin(false)} />
       ) : (
         // Renderiza o componente de Register se isLogin for falso
-        <Register onRegistrationSuccess={handleRegistrationSuccess} onSwitchToLogin={() => setIsLogin(true)} />
+        <Register onRegisterSuccess={handleRegistrationSuccess} onSwitchToLogin={() => setIsLogin(true)} />
       )}
     </div>
   );
