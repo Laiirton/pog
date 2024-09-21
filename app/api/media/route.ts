@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     const fileInfoMap = new Map(dbResult.map(row => [row.file_id, row]));
 
     // Buscar votos do usuário, se um token de usuário for fornecido
-    let userVotes = {};
+    let userVotes: Record<string, number> = {};
     if (userToken) {
       const { data: votesData, error: votesError } = await supabase
         .from('user_votes')
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
 
       if (votesError) {
         console.error('Error fetching user votes:', votesError);
-      } else {
+      } else if (votesData) {
         userVotes = Object.fromEntries(votesData.map(vote => [vote.media_id, vote.vote_type]));
       }
     }
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
           created_at: file.createdTime,
           upvotes: dbInfo?.upvotes || 0,
           downvotes: dbInfo?.downvotes || 0,
-          user_vote: userVotes?.[file.id] || 0,
+          user_vote: file.id && userVotes[file.id] ? userVotes[file.id] : 0,
         };
       } catch (error) {
         console.error(`File ${file.id} not found or inaccessible`);
@@ -85,7 +85,7 @@ export async function GET(request: Request) {
       }
     }));
 
-    const validMediaItems = mediaItems.filter(item => item !== null);
+    const validMediaItems = mediaItems.filter((item): item is NonNullable<typeof item> => item !== null);
 
     return NextResponse.json(validMediaItems, {
       headers: {
