@@ -68,7 +68,11 @@ const getImageSrc = (src: string) => {
 // Componente principal da galeria de mídia retrô
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
   // Estados e hooks para gerenciar os dados e o estado da aplicação
-  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher)
+  const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    refreshInterval: 60000 // Recarrega a cada 1 minuto
+  })
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -203,7 +207,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
         const result = await response.json();
         if (response.ok) {
           console.log('Resultado da exclusão:', result);
-          mutate(); // Recarrega a lista de mídias
+          await forceRefresh(); // Força uma atualização imediata
         } else {
           console.error('Falha ao excluir mídia:', result);
         }
@@ -212,6 +216,21 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       }
     }
   }
+
+  const forceRefresh = useCallback(async () => {
+    try {
+      const freshData = await fetcher('/api/media');
+      mutate(freshData, false);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  }, [mutate]);
+
+  useEffect(() => {
+    forceRefresh();
+    const intervalId = setInterval(forceRefresh, 300000); // Força atualização a cada 5 minutos
+    return () => clearInterval(intervalId);
+  }, [forceRefresh]);
 
   // Tratamento de erro na busca de mídia
   if (error) {
