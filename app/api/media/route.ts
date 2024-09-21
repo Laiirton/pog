@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
 
 // Inicialize o cliente do Supabase
 const supabase = createClient(
@@ -51,15 +52,25 @@ export async function GET(request: Request) {
     // Buscar votos do usuário, se um token de usuário for fornecido
     let userVotes: Record<string, number> = {};
     if (userToken) {
-      const { data: votesData, error: votesError } = await supabase
-        .from('user_votes')
-        .select('media_id, vote_type')
-        .eq('user_token', userToken);
+      try {
+        // Decodificar o token para obter o username
+        const decoded = jwt.verify(userToken, process.env.JWT_SECRET!) as { username: string };
+        const username = decoded.username;
 
-      if (votesError) {
-        console.error('Error fetching user votes:', votesError);
-      } else if (votesData) {
-        userVotes = Object.fromEntries(votesData.map(vote => [vote.media_id, vote.vote_type]));
+        const { data: userData, error: userError } = await supabase
+          .from('usernames')
+          .select('votes')
+          .eq('username', username)
+          .single();
+
+        if (userError) throw userError;
+        
+        if (userData && userData.votes) {
+          userVotes = userData.votes;
+        }
+      } catch (error) {
+        console.error('Error fetching user votes:', error);
+        // Não retorne erro, apenas continue com userVotes vazio
       }
     }
 
