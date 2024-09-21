@@ -17,11 +17,6 @@ interface JwtPayload {
   username: string
 }
 
-interface MediaUpload {
-  upvotes: number
-  downvotes: number
-}
-
 export async function POST(request: Request) {
   try {
     const body = await request.json()
