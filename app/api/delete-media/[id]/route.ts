@@ -20,7 +20,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   }
 
   try {
-    const decoded: any = jwt.verify(adminToken, process.env.JWT_SECRET!);
+    const decoded = jwt.verify(adminToken, process.env.JWT_SECRET!) as { isAdmin: boolean };
     if (!decoded.isAdmin) {
       throw new Error('Not an admin');
     }
@@ -37,9 +37,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     // Tente obter informações do arquivo antes de excluí-lo
     try {
       await drive.files.get({ fileId });
-    } catch (getError: any) {
+    } catch (getError) {
       console.error('Error getting file info:', getError);
-      return NextResponse.json({ error: `File not found or inaccessible: ${getError.message}` }, { status: 404 });
+      return NextResponse.json({ error: `File not found or inaccessible: ${(getError as Error).message}` }, { status: 404 });
     }
 
     // Deletar o arquivo do Google Drive
@@ -47,8 +47,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     console.log('File deleted from Google Drive:', fileId);
 
     return NextResponse.json({ message: 'Media deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting media:', error);
-    return NextResponse.json({ error: `Failed to delete media: ${error.message}`, details: error }, { status: 500 });
+    return NextResponse.json({ error: `Failed to delete media: ${(error as Error).message}`, details: error }, { status: 500 });
   }
 }
