@@ -10,25 +10,32 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Definindo o tipo de dados para o ranking
+interface UserStats {
+  upload_count: number;
+  upvotes: number;
+  downvotes: number;
+}
+
 // Função para lidar com requisições GET
 export async function GET() {
   try {
     // Consultando o banco de dados para obter o ranking de usuários
     const { data, error } = await supabase
       .from('media_uploads')
-      .select('username, file_id, upvotes, downvotes')
+      .select('username, upvotes, downvotes')
 
     // Se houver um erro na consulta, lança uma exceção
     if (error) throw error;
 
     // Agregar os dados por usuário
-    const userStats = data.reduce((acc, item) => {
+    const userStats = data.reduce((acc: Record<string, UserStats>, item) => {
       if (!acc[item.username]) {
         acc[item.username] = { upload_count: 0, upvotes: 0, downvotes: 0 };
       }
       acc[item.username].upload_count++;
-      acc[item.username].upvotes += item.upvotes || 0;
-      acc[item.username].downvotes += item.downvotes || 0;
+      acc[item.username].upvotes += item.upvotes;
+      acc[item.username].downvotes += item.downvotes;
       return acc;
     }, {});
 
