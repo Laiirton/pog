@@ -32,13 +32,13 @@ export function Welcome({ onEnter }: WelcomeProps) {
   // Renderiza uma tela de carregamento enquanto isLoading for true
   if (isLoading) {
     return <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-cyan-500 text-2xl">Loading...</div>
+      <div className="text-orange-500 text-2xl">Loading...</div>
     </div>;
   }
 
   // Renderização principal do componente
   return (
-    <div className="min-h-screen bg-black text-cyan-500 font-mono relative overflow-hidden">
+    <div className="min-h-screen bg-black text-orange-400 font-mono relative overflow-hidden">
       {/* Componente de efeito visual de "chuva de matrix" */}
       <MatrixRain />
       <div className="relative z-10 flex flex-col h-screen items-center justify-center p-8">
@@ -47,7 +47,7 @@ export function Welcome({ onEnter }: WelcomeProps) {
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="text-6xl font-bold mb-8 text-cyan-300 text-center"
+          className="text-6xl font-bold mb-8 text-orange-300 text-center"
         >
           Welcome to Pog Gallery
         </motion.h1>
@@ -59,24 +59,24 @@ export function Welcome({ onEnter }: WelcomeProps) {
             transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
             className="w-1/2"
           >
-            <div className="bg-gray-900 bg-opacity-70 p-6 rounded-lg shadow-lg mb-8">
-              <p className="text-lg mb-4 text-cyan-100">
+            <div className="bg-orange-900 bg-opacity-20 p-6 rounded-lg shadow-lg mb-8 border border-orange-500">
+              <p className="text-lg mb-4 text-orange-200">
                 Step into the digital realm of Pog Gallery, where cyberpunk aesthetics meet cutting-edge media sharing.
               </p>
-              <p className="text-lg mb-4 text-cyan-200">
+              <p className="text-lg mb-4 text-orange-300">
                 Your uploads become digital artifacts in a world of bits and pixels.
               </p>
-              <p className="text-lg mb-4 text-cyan-300">
+              <p className="text-lg mb-4 text-orange-400">
                 Join our cyber community and leave your mark on the Pog Gallery grid.
               </p>
-              <p className="text-sm italic text-cyan-400 mt-4">
+              <p className="text-sm italic text-orange-500 mt-4">
                 Created by anjinho ruindade pura 😈
               </p>
             </div>
             {/* Botão para entrar na galeria */}
             <Button
               onClick={onEnter}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-black border border-cyan-300 shadow-lg shadow-cyan-500/50 transition-all duration-300 text-lg py-3"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-black border border-orange-300 shadow-lg shadow-orange-500/50 transition-all duration-300 text-lg py-3"
             >
               <LogIn size={24} className="mr-2" />
               Enter Gallery
