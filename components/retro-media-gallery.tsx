@@ -252,10 +252,16 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
 
     try {
+      const userToken = localStorage.getItem('username') // Pegando o token do localStorage
+      if (!userToken) {
+        alert('Token de usuário não encontrado. Faça login novamente.')
+        return
+      }
+
       const response = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaId: mediaId.toString(), username, voteType }),
+        body: JSON.stringify({ mediaId: mediaId.toString(), userToken, voteType }),
       })
 
       if (response.ok) {
