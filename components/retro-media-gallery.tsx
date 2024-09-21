@@ -292,11 +292,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                   user_vote: result.userVote,
                 }
               : item
-          ),
-          false // Não revalidar imediatamente
+          )
         )
-        // Forçar uma atualização dos dados
-        mutate()
       } else {
         throw new Error('Falha ao registrar o voto')
       }
@@ -512,7 +509,6 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
             <ArrowBigUp size={20} />
             <span className="ml-1">{item.upvotes}</span>
           </button>
-          <span className="text-sm font-bold">{item.upvotes - item.downvotes}</span>
           <button
             onClick={(e) => {
               e.stopPropagation()
