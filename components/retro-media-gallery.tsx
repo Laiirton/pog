@@ -454,10 +454,10 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
   const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
-    preloadImage(item.thumbnail || item.src)
+    preloadImage(`/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`)
       .then(() => setImageLoaded(true))
       .catch(() => setImageError(true))
-  }, [item.thumbnail, item.src, preloadImage])
+  }, [item.thumbnail, preloadImage])
 
   return (
     <motion.div
@@ -469,7 +469,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
       <div className="relative aspect-video">
         {!imageError ? (
           <Image
-            src={item.thumbnail || item.src}
+            src={`/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`}
             alt={item.title}
             layout="fill"
             objectFit="cover"

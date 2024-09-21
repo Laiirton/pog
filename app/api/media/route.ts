@@ -77,7 +77,7 @@ export async function GET(request: Request) {
           created_at: file.createdTime,
           upvotes: dbInfo?.upvotes || 0,
           downvotes: dbInfo?.downvotes || 0,
-          user_vote: userVotes[file.id] || 0,
+          user_vote: userVotes?.[file.id] || 0,
         };
       } catch (error) {
         console.error(`File ${file.id} not found or inaccessible`);
