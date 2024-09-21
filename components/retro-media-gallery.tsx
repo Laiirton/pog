@@ -455,6 +455,7 @@ const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { select
                   thumbnail={selectedMedia.thumbnail}
                   preloaded={true}
                   getCachedImage={getCachedImage}
+                  onClose={onClose}
                 />
               )}
             </div>
