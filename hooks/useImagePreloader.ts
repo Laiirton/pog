@@ -9,6 +9,12 @@ export function useImagePreloader() {
   // Função para pré-carregar uma imagem
   const preloadImage = useCallback((src: string): Promise<void> => {
     return new Promise((resolve, reject) => {
+      // Verifica se a imagem já está no cache
+      if (imageCache[src]) {
+        resolve();
+        return;
+      }
+
       const img = new Image();
       img.src = src;
       img.onload = () => {
@@ -18,7 +24,7 @@ export function useImagePreloader() {
       };
       img.onerror = reject;
     });
-  }, []);
+  }, [imageCache]);
 
   // Função para obter uma imagem do cache
   const getCachedImage = useCallback((src: string): string | null => {
