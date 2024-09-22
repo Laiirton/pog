@@ -237,6 +237,15 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [mediaItems, preloadImage])
 
+  // Efeito para pré-carregar todas as imagens ao abrir a página
+  useEffect(() => {
+    if (mediaItems) {
+      mediaItems.forEach(item => {
+        preloadImage(getImageSrc(item.src))
+      })
+    }
+  }, [mediaItems, preloadImage])
+
   // Filtragem dos itens de mídia baseada nos filtros aplicados
   const filteredMediaItems = useMemo(() => {
     if (!mediaItems) return []
