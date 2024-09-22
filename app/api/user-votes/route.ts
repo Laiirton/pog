@@ -2,11 +2,27 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import jwt from 'jsonwebtoken';
 
 // Função para lidar com requisições GET
 export async function GET(request: NextRequest) {
-  // Extrair o username dos parâmetros da requisição
-  const username = request.nextUrl.searchParams.get('username');
+  const token = request.nextUrl.searchParams.get('username');
+
+  if (!token) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+  }
+
+  let username;
+  try {
+    const decoded = jwt.decode(token);
+    if (typeof decoded === 'object' && decoded !== null && 'username' in decoded) {
+      username = decoded.username;
+    } else {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+    }
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+  }
 
   try {
     if (username) {
