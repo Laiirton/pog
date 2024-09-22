@@ -18,6 +18,7 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden; /* Adicionei overflow: hidden aqui */
 }
 
 @layer utilities {
@@ -105,15 +106,15 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #00ff00, #008000);
+  background: linear-gradient(to bottom, #00ff00, #004d00);
   border: 2px solid #000000;
   border-radius: 6px;
-  box-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #00ff00, #006600);
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+  background: linear-gradient(to bottom, #00ff00, #003300);
+  box-shadow: 0 0 12px rgba(0, 255, 0, 0.9);
 }
 
 ::-webkit-scrollbar-corner {
@@ -138,15 +139,15 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #00ff00, #008000);
+  background: linear-gradient(to bottom, #00ff00, #004d00);
   border: 2px solid #000000;
   border-radius: 6px;
-  box-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #00ff00, #006600);
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+  background: linear-gradient(to bottom, #00ff00, #003300);
+  box-shadow: 0 0 12px rgba(0, 255, 0, 0.9);
 }
 
 .custom-scrollbar::-webkit-scrollbar-corner {
