@@ -356,7 +356,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   return (
     <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
-      <div className="relative z-10 flex flex-col h-screen">
+      <div className="relative z-10 flex flex-col h-screen overflow-hidden">
         <header className="bg-black bg-opacity-80 p-4 flex justify-between items-center border-b border-green-500">
           <div className="w-1/3">
             {/* Espaço vazio à esquerda para balancear o layout */}
