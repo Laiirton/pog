@@ -47,6 +47,11 @@ interface MediaItem {
   user_vote?: number
 }
 
+// Interface para definir a estrutura dos votos do usuário
+interface UserVotes {
+  [mediaId: string]: number
+}
+
 // Função para formatar a data
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
@@ -92,6 +97,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [date, setDate] = useState<Date | null>(null) // Estado para a data
   const [username, setUsername] = useState<string | null>(null)
   const [userScore, setUserScore] = useState(0)
+  const [userVotes, setUserVotes] = useState<UserVotes>({})
 
   const { preloadImage, getCachedImage } = useImagePreloader()
 
@@ -123,6 +129,33 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       setUsername(storedUsername)
     }
   }, [])
+
+  // Função para buscar os votos do usuário
+  const fetchUserVotes = useCallback(async () => {
+    const userToken = localStorage.getItem('username')
+    if (userToken) {
+      try {
+        const response = await fetch(`/api/user-votes?username=${userToken}`)
+        if (response.ok) {
+          const data = await response.json()
+          const votes = data.user.votes.reduce((acc: UserVotes, vote: { file_id: string, voteType: number }) => {
+            acc[vote.file_id] = vote.voteType
+            return acc
+          }, {})
+          setUserVotes(votes)
+        } else {
+          console.error('Failed to fetch user votes')
+        }
+      } catch (error) {
+        console.error('Error fetching user votes:', error)
+      }
+    }
+  }, [])
+
+  // Efeito para carregar os votos do usuário ao abrir a página
+  useEffect(() => {
+    fetchUserVotes()
+  }, [fetchUserVotes])
 
   // Função para lidar com o logout
   const handleLogout = useCallback(() => {
@@ -294,6 +327,11 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
               : item
           )
         )
+        // Atualizar os votos do usuário no estado
+        setUserVotes(prevVotes => ({
+          ...prevVotes,
+          [mediaId]: result.userVote
+        }))
       } else {
         throw new Error('Falha ao registrar o voto')
       }
@@ -406,6 +444,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     getCachedImage={getCachedImage}
                     onVote={handleVote}
                     username={username}
+                    userVote={userVotes[item.id]} // Passar o voto do usuário para o componente MediaItem
                   />
                 ))}
               </div>
@@ -441,7 +480,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 }
 
 // Componente para exibir um item de mídia individual
-const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, username }: { 
+const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, username, userVote }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void
@@ -449,6 +488,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
   getCachedImage: (src: string) => string | null
   onVote: (mediaId: string, voteType: number) => void
   username: string | null
+  userVote?: number // Adicionar a prop userVote
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
@@ -501,9 +541,9 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onVote(item.id, item.user_vote === 1 ? 0 : 1)
+              onVote(item.id, userVote === 1 ? 0 : 1)
             }}
-            className={`flex items-center p-1 rounded ${item.user_vote === 1 ? 'text-orange-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            className={`flex items-center p-1 rounded ${userVote === 1 ? 'text-orange-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
             disabled={!username}
           >
             <ArrowBigUp size={20} />
@@ -512,9 +552,9 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onVote(item.id, item.user_vote === -1 ? 0 : -1)
+              onVote(item.id, userVote === -1 ? 0 : -1)
             }}
-            className={`flex items-center p-1 rounded ${item.user_vote === -1 ? 'text-blue-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            className={`flex items-center p-1 rounded ${userVote === -1 ? 'text-blue-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
             disabled={!username}
           >
             <span className="mr-1">{item.downvotes}</span>
