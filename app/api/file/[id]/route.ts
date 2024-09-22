@@ -44,10 +44,25 @@ export async function GET(
     const readable = file.data as Readable;
     const stream = new ReadableStream({
       start(controller) {
-        readable.on('data', (chunk) => controller.enqueue(chunk));
-        readable.on('end', () => controller.close());
-        readable.on('error', (err) => controller.error(err));
+        readable.on('data', (chunk) => {
+          if (controller.desiredSize !== null && controller.desiredSize > 0) {
+            controller.enqueue(chunk);
+          }
+        });
+        readable.on('end', () => {
+          if (controller.desiredSize !== null && controller.desiredSize > 0) {
+            controller.close();
+          }
+        });
+        readable.on('error', (err) => {
+          if (controller.desiredSize !== null && controller.desiredSize > 0) {
+            controller.error(err);
+          }
+        });
       },
+      cancel() {
+        readable.destroy();
+      }
     });
 
     // Retorna a resposta com o stream do arquivo e os cabeçalhos
