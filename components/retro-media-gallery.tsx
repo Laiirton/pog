@@ -79,6 +79,8 @@ const getImageSrc = (src: string) => {
   return src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_BASE_URL}${src}`
 }
 
+const BATCH_SIZE = 10;
+
 // Componente principal da galeria de mídia retrô
 export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryComponentProps) {
   // Estados e hooks para gerenciar os dados e o estado da aplicação
@@ -99,13 +101,31 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [userScore, setUserScore] = useState(0)
   const [userVotes, setUserVotes] = useState<UserVotes>({})
 
-  const { preloadImage, getCachedImage } = useImagePreloader()
+  const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
 
   // Função para buscar dados da API com o token do usuário
   const fetcherWithToken = useCallback((url: string) => {
     const userToken = localStorage.getItem('username')
     const urlWithToken = `${url}${url.includes('?') ? '&' : '?'}userToken=${userToken}`
-    return fetcher(urlWithToken)
+    return fetch(urlWithToken)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return response.json()
+      })
+      .then(data => {
+        return data.map((item: MediaItem) => ({
+          ...item,
+          upvotes: item.upvotes || 0,
+          downvotes: item.downvotes || 0,
+          user_vote: item.user_vote || 0
+        }))
+      })
+      .catch(error => {
+        console.error('Erro ao buscar dados:', error)
+        throw error
+      })
   }, [])
 
   const { data: mediaItems, error, mutate } = useSWR<MediaItem[]>('/api/media', fetcherWithToken, {
@@ -224,27 +244,25 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }
 
-  // Efeito para pré-carregar imagens
+  // Efeito para pré-carregar imagens em lotes
   useEffect(() => {
     if (mediaItems) {
-      mediaItems.forEach(async (item) => {
-        if (item.thumbnail) {
-          preloadImage(item.thumbnail)
-        } else if (item.type === 'image') {
-          preloadImage(getImageSrc(item.src))
-        }
-      })
-    }
-  }, [mediaItems, preloadImage])
+      const imagesToPreload = mediaItems.map(item => 
+        item.type === 'image' ? getImageSrc(item.src) : `/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`
+      );
 
-  // Efeito para pré-carregar todas as imagens ao abrir a página
-  useEffect(() => {
-    if (mediaItems) {
-      mediaItems.forEach(item => {
-        preloadImage(getImageSrc(item.src))
-      })
+      const preloadBatch = async (startIndex: number) => {
+        const batch = imagesToPreload.slice(startIndex, startIndex + BATCH_SIZE);
+        await preloadImages(batch);
+        
+        if (startIndex + BATCH_SIZE < imagesToPreload.length) {
+          setTimeout(() => preloadBatch(startIndex + BATCH_SIZE), 100);
+        }
+      };
+
+      preloadBatch(0);
     }
-  }, [mediaItems, preloadImage])
+  }, [mediaItems, preloadImages]);
 
   // Filtragem dos itens de mídia baseada nos filtros aplicados
   const filteredMediaItems = useMemo(() => {
@@ -454,6 +472,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     onVote={handleVote}
                     username={username}
                     userVote={userVotes[item.id]} // Passar o voto do usuário para o componente MediaItem
+                    imageCache={imageCache}
                   />
                 ))}
               </div>
@@ -489,7 +508,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 }
 
 // Componente para exibir um item de mídia individual
-const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, username, userVote }: { 
+const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, username, userVote, imageCache }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void
@@ -498,15 +517,24 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
   onVote: (mediaId: string, voteType: number) => void
   username: string | null
   userVote?: number // Adicionar a prop userVote
+  imageCache: Record<string, string>
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
 
+  const imageSrc = item.type === 'image' 
+    ? getImageSrc(item.src) 
+    : `/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`;
+
   useEffect(() => {
-    preloadImage(`/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`)
-      .then(() => setImageLoaded(true))
-      .catch(() => setImageError(true))
-  }, [item.thumbnail, preloadImage])
+    if (imageCache[imageSrc]) {
+      setImageLoaded(true);
+    } else {
+      preloadImage(imageSrc)
+        .then(() => setImageLoaded(true))
+        .catch(() => setImageError(true));
+    }
+  }, [imageSrc, preloadImage, imageCache]);
 
   return (
     <motion.div
@@ -518,7 +546,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
       <div className="relative aspect-video">
         {!imageError ? (
           <Image
-            src={`/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`}
+            src={imageSrc}
             alt={item.title}
             layout="fill"
             objectFit="cover"
