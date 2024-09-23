@@ -100,6 +100,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [username, setUsername] = useState<string | null>(null)
   const [userScore, setUserScore] = useState(0)
   const [userVotes, setUserVotes] = useState<UserVotes>({})
+  const [sortBy, setSortBy] = useState('')
 
   const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
 
@@ -264,17 +265,25 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [mediaItems, preloadImages]);
 
-  // Filtragem dos itens de mídia baseada nos filtros aplicados
-  const filteredMediaItems = useMemo(() => {
+  // Filtragem e ordenação dos itens de mídia
+  const filteredAndSortedMediaItems = useMemo(() => {
     if (!mediaItems) return []
-    return mediaItems.filter(item => 
+    
+    let filtered = mediaItems.filter(item => 
       (selectedType === 'all' || item.type === selectedType) &&
       (!selectedUser || item.username === selectedUser) &&
       (!searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (!startDate || new Date(item.created_at) >= startDate) &&
-      (!endDate || new Date(item.created_at) <= endDate)
+      (!startDate || new Date(item.created_at) >= startDate)
     )
-  }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, endDate])
+
+    if (sortBy === 'upvotes') {
+      filtered.sort((a, b) => b.upvotes - a.upvotes)
+    } else if (sortBy === 'downvotes') {
+      filtered.sort((a, b) => b.downvotes - a.downvotes)
+    }
+
+    return filtered
+  }, [mediaItems, selectedType, selectedUser, searchTerm, startDate, sortBy])
 
   // Função para lidar com o sucesso do upload
   const handleUploadSuccess = useCallback(() => {
@@ -456,12 +465,14 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                 endDate={endDate}
                 setEndDate={setEndDate}
                 allUsers={allUsers}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
               />
             </div>
             
             <div className="mt-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-                {filteredMediaItems.map((item: MediaItem) => (
+                {filteredAndSortedMediaItems.map((item: MediaItem) => (
                   <MediaItem 
                     key={item.id} 
                     item={item} 
@@ -471,7 +482,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     getCachedImage={getCachedImage}
                     onVote={handleVote}
                     username={username}
-                    userVote={userVotes[item.id]} // Passar o voto do usuário para o componente MediaItem
+                    userVote={userVotes[item.id]}
                     imageCache={imageCache}
                   />
                 ))}
@@ -516,7 +527,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
   getCachedImage: (src: string) => string | null
   onVote: (mediaId: string, voteType: number) => void
   username: string | null
-  userVote?: number // Adicionar a prop userVote
+  userVote?: number
   imageCache: Record<string, string>
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
