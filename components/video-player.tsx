@@ -183,7 +183,7 @@ export function VideoPlayer({
 
   return (
     <div 
-      className="w-full h-full bg-black rounded-lg overflow-hidden shadow-lg relative"
+      className="w-full h-full bg-black rounded-t-lg overflow-hidden shadow-lg relative"
       onMouseMove={showControlsTemporarily}
       onMouseLeave={() => setShowControls(false)}
       style={{ 
