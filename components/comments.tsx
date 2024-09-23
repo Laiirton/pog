@@ -5,7 +5,7 @@ import { MessageSquare, Send, ChevronUp, ChevronDown } from 'lucide-react'
 
 interface Comment {
   id: string
-  username: string
+  username: string | null
   content: string
   created_at: string
 }
@@ -40,7 +40,7 @@ export function Comments({ comments, onAddComment, username }: CommentsProps) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-green-400 flex items-center">
             <MessageSquare className="mr-2" size={20} />
-            Comentários
+            Comments
           </h3>
           <Button 
             onClick={() => setShowComments(!showComments)} 
@@ -62,7 +62,7 @@ export function Comments({ comments, onAddComment, username }: CommentsProps) {
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Adicione um comentário..."
+                placeholder="Add a comment..."
                 className="w-full p-2 bg-black text-green-400 border border-green-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
                 rows={3}
               />
@@ -71,25 +71,31 @@ export function Comments({ comments, onAddComment, username }: CommentsProps) {
                 className="mt-2 bg-green-600 hover:bg-green-700 text-black flex items-center"
               >
                 <Send size={16} className="mr-2" />
-                Enviar Comentário
+                Send Comment
               </Button>
             </form>
           )}
           <div className="space-y-4 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
-            {comments.map((comment) => (
-              <motion.div
-                key={comment.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-green-900 bg-opacity-20 p-3 rounded-lg border border-green-500 border-opacity-30"
-              >
-                <p className="font-bold text-green-400">{comment.username}</p>
-                <p className="text-green-300 mt-1">{comment.content}</p>
-                <p className="text-xs text-green-500 mt-2">
-                  {new Date(comment.created_at).toLocaleString()}
-                </p>
-              </motion.div>
-            ))}
+            {comments && comments.length > 0 ? comments.map((comment) => (
+              comment && (
+                <motion.div
+                  key={comment.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-green-900 bg-opacity-20 p-3 rounded-lg border border-green-500 border-opacity-30"
+                >
+                  <p className="font-bold text-green-400">
+                    {comment.username || 'Anonymous'}
+                  </p>
+                  <p className="text-green-300 mt-1">{comment.content}</p>
+                  <p className="text-xs text-green-500 mt-2">
+                    {new Date(comment.created_at).toLocaleString()}
+                  </p>
+                </motion.div>
+              )
+            )) : (
+              <p className="text-green-400">No comments yet.</p>
+            )}
           </div>
         </motion.div>
       </div>
