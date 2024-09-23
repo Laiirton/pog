@@ -2,12 +2,13 @@
 'use client'
 
 // Importando os hooks e componentes necessários
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MatrixRain } from './matrix-rain';
 import { UserRanking } from './user-ranking';
 import { Button } from "@/components/ui/button";
 import { LogIn } from 'lucide-react';
+import { LoadingAnimation } from './loading-animation'; // Importe o novo componente
 
 // Definindo a interface para as props do componente Welcome
 interface WelcomeProps {
@@ -19,21 +20,19 @@ export function Welcome({ onEnter }: WelcomeProps) {
   // Estado para controlar o carregamento inicial
   const [isLoading, setIsLoading] = useState(true);
 
-  // Efeito para simular um carregamento de 1 segundo
+  // Efeito para simular um carregamento de 2 segundos
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 2000); // Aumentamos para 2 segundos para dar tempo de ver a animação
 
     // Limpeza do timer quando o componente é desmontado
     return () => clearTimeout(timer);
   }, []);
 
-  // Renderiza uma tela de carregamento enquanto isLoading for true
+  // Renderiza a nova animação de carregamento enquanto isLoading for true
   if (isLoading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-orange-500 text-2xl">Loading...</div>
-    </div>;
+    return <LoadingAnimation />;
   }
 
   // Renderização principal do componente
