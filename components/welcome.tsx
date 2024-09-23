@@ -46,7 +46,7 @@ export function Welcome({ onEnter }: WelcomeProps) {
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="text-6xl font-bold mb-8 text-orange-300 text-center"
+          className="text-6xl font-bold mb-8 text-orange-300 text-center mt-20 md:mt-0"
         >
           Welcome to Pog Gallery
         </motion.h1>
