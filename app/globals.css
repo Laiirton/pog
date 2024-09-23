@@ -188,3 +188,33 @@ body {
 body {
   overflow: hidden;
 }
+
+/* Adicione isso ao final do arquivo */
+
+/* Estilização da barra de rolagem para os favoritos */
+.favorites-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.favorites-scrollbar::-webkit-scrollbar-track {
+  background: rgba(168, 85, 247, 0.1);
+  border-radius: 4px;
+}
+
+.favorites-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%);
+  border-radius: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.5);
+}
+
+.favorites-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a855f7 0%, #9333ea 100%);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.7);
+}
+
+/* Estilo para Firefox */
+.favorites-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #a855f7 rgba(168, 85, 247, 0.1);
+}

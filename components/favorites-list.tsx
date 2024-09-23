@@ -41,7 +41,7 @@ export function FavoritesList({ favorites, onClose, onSelectMedia }: FavoritesLi
               <X className="h-6 w-6" />
             </Button>
           </div>
-          <div className="overflow-y-auto flex-grow custom-scrollbar">
+          <div className="overflow-y-auto flex-grow favorites-scrollbar">
             {favorites.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {favorites.map((item) => (
