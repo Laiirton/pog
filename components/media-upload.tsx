@@ -6,6 +6,19 @@ import { useState, useRef, useCallback } from 'react'
 
 import { Upload, X, FileImage, FileVideo, Loader } from 'lucide-react'
 
+// Adicione esta constante no topo do arquivo, fora do componente
+const ALLOWED_FILE_TYPES = {
+  'image/jpeg': true,
+  'image/png': true,
+  'image/gif': true,
+  'image/webp': true,
+  'image/svg+xml': true,
+  'video/mp4': true,
+  'video/webm': true,
+  'video/ogg': true,
+  'video/quicktime': true,
+};
+
 // Interface para as props do componente MediaUpload
 interface MediaUploadProps {
   onUploadSuccess: () => void;
@@ -20,12 +33,21 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [fileTypeError, setFileTypeError] = useState<string | null>(null);
 
   // Função para lidar com a mudança de arquivo
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0])
-      setFileName(event.target.files[0].name)
+      const file = event.target.files[0];
+      if (ALLOWED_FILE_TYPES[file.type]) {
+        setFile(file);
+        setFileName(file.name);
+        setFileTypeError(null);
+      } else {
+        setFile(null);
+        setFileName('');
+        setFileTypeError('Tipo de arquivo não permitido. Por favor, selecione uma imagem ou vídeo.');
+      }
     }
   }
 
@@ -34,8 +56,16 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
     event.preventDefault()
     setIsDragging(false)
     if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      setFile(event.dataTransfer.files[0])
-      setFileName(event.dataTransfer.files[0].name)
+      const file = event.dataTransfer.files[0];
+      if (ALLOWED_FILE_TYPES[file.type]) {
+        setFile(file);
+        setFileName(file.name);
+        setFileTypeError(null);
+      } else {
+        setFile(null);
+        setFileName('');
+        setFileTypeError('Tipo de arquivo não permitido. Por favor, selecione uma imagem ou vídeo.');
+      }
     }
   }
 
@@ -77,6 +107,11 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
       formData.append('username', username)
 
       try {
+        // Verificar novamente o tipo de arquivo antes de enviar
+        if (!ALLOWED_FILE_TYPES[file.type]) {
+          throw new Error('Tipo de arquivo não permitido.');
+        }
+
         // Enviar o arquivo para a API
         const response = await fetch('/api/upload', {
           method: 'POST',
@@ -180,6 +215,9 @@ export function MediaUpload({ onUploadSuccess }: MediaUploadProps) {
             </div>
             {uploadError && (
               <p className="text-red-500 text-sm">{uploadError}</p>
+            )}
+            {fileTypeError && (
+              <p className="text-red-500 text-sm mt-2">{fileTypeError}</p>
             )}
           </div>
         </div>
