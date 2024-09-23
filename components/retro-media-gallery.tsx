@@ -4,7 +4,6 @@
     
 // Importações necessárias para o componente
 import useSWR from 'swr'
-
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown, Heart } from 'lucide-react'
@@ -20,6 +19,7 @@ import { LoadingAnimation } from './loading-animation'
 import { useImagePreloader } from '../hooks/useImagePreloader'
 import { FavoritesList } from './favorites-list'
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Comments } from './comments'
 
 // Função para buscar dados da API
 const fetcher = async (url: string): Promise<MediaItem[]> => {
@@ -48,6 +48,14 @@ export interface MediaItem {
   upvotes: number
   downvotes: number
   user_vote?: number
+  comments?: Comment[]
+}
+
+interface Comment {
+  id: string
+  username: string
+  content: string
+  created_at: string
 }
 
 // Interface para definir a estrutura dos votos do usuário
@@ -111,6 +119,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [userFavorites, setUserFavorites] = useState<UserFavorites>({})
   const [sortBy, setSortBy] = useState('')
   const [showFavorites, setShowFavorites] = useState(false)
+  const [comments, setComments] = useState<Comment[]>([])
 
   const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
 
@@ -442,6 +451,47 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }
 
+  // Função para buscar comentários
+  const fetchComments = useCallback(async (mediaId: string) => {
+    try {
+      const response = await fetch(`/api/comments?mediaId=${mediaId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setComments(data)
+      } else {
+        console.error('Failed to fetch comments')
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error)
+    }
+  }, [])
+
+  // Função para adicionar um comentário
+  const addComment = useCallback(async (mediaId: string, content: string) => {
+    if (!username) {
+      alert('Você precisa estar logado para comentar.')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaId, username, content }),
+      })
+
+      if (response.ok) {
+        const newComment = await response.json()
+        setComments(prevComments => [newComment, ...prevComments])
+      } else {
+        throw new Error('Falha ao adicionar comentário')
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar comentário:', error)
+      alert('Ocorreu um erro ao adicionar o comentário. Por favor, tente novamente.')
+    }
+  }, [username])
+
   // Filtragem dos itens favoritos
   const favoriteItems = useMemo(() => {
     if (!mediaItems) return []
@@ -571,7 +621,15 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
         </main>
       </div>
 
-      <SelectedMediaModal selectedMedia={selectedMedia} onClose={() => setSelectedMedia(null)} getCachedImage={getCachedImage} />
+      <SelectedMediaModal 
+        selectedMedia={selectedMedia} 
+        onClose={() => setSelectedMedia(null)} 
+        getCachedImage={getCachedImage}
+        comments={comments}
+        fetchComments={fetchComments}
+        addComment={addComment}
+        username={username}
+      />
       {showUpload && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
           <div className="bg-black border border-green-500 rounded-lg p-6 relative max-w-md w-full">
@@ -729,7 +787,29 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
 }
 
 // Componente para exibir o modal com a mídia selecionada
-const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { selectedMedia: MediaItem | null; onClose: () => void; getCachedImage: (src: string) => string | null }) => {
+const SelectedMediaModal = ({ 
+  selectedMedia, 
+  onClose, 
+  getCachedImage,
+  comments,
+  fetchComments,
+  addComment,
+  username
+}: { 
+  selectedMedia: MediaItem | null; 
+  onClose: () => void; 
+  getCachedImage: (src: string) => string | null;
+  comments: Comment[];
+  fetchComments: (mediaId: string) => Promise<void>;
+  addComment: (mediaId: string, content: string) => Promise<void>;
+  username: string | null;
+}) => {
+  useEffect(() => {
+    if (selectedMedia) {
+      fetchComments(selectedMedia.id)
+    }
+  }, [selectedMedia, fetchComments])
+
   return (
     <AnimatePresence>
       {selectedMedia && (
@@ -739,7 +819,7 @@ const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { select
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
         >
-          <div className="w-full max-w-4xl relative">
+          <div className="w-full max-w-3xl relative"> {/* Reduzido o tamanho máximo do modal */}
             <div className="w-full aspect-video">
               {selectedMedia.type === 'video' ? (
                 <VideoPlayer 
@@ -760,6 +840,11 @@ const SelectedMediaModal = ({ selectedMedia, onClose, getCachedImage }: { select
                 />
               )}
             </div>
+            <Comments 
+              comments={comments}
+              onAddComment={(content) => addComment(selectedMedia.id, content)}
+              username={username}
+            />
           </div>
         </motion.div>
       )}
