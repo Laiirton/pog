@@ -106,7 +106,6 @@ export const LoadingAnimation: React.FC = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        Loading...
       </motion.p>
     </div>
   );
