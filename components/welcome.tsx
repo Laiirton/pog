@@ -40,7 +40,7 @@ export function Welcome({ onEnter }: WelcomeProps) {
     <div className="min-h-screen bg-black text-orange-400 font-mono relative overflow-hidden">
       {/* Componente de efeito visual de "chuva de matrix" */}
       <MatrixRain />
-      <div className="relative z-10 flex flex-col h-screen items-center justify-center p-8">
+      <div className="relative z-10 flex flex-col h-screen items-center justify-center p-8 overflow-y-auto">
         {/* Título animado */}
         <motion.h1
           initial={{ opacity: 0, y: -50 }}
@@ -86,7 +86,7 @@ export function Welcome({ onEnter }: WelcomeProps) {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut", delay: 0.7 }}
-            className="w-full md:w-1/2"
+            className="w-full md:w-1/2 overflow-y-auto max-h-[50vh] md:max-h-full"
           >
             <UserRanking />
           </motion.div>
