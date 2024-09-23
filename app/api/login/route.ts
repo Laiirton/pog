@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     // Se o usuário não for encontrado, retorna um erro
     if (error || !user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'User not found, please register' }, { status: 404 });
     }
 
     // Comparando a senha fornecida com a senha armazenada
