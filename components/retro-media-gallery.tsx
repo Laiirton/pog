@@ -819,7 +819,7 @@ const SelectedMediaModal = ({
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
         >
-          <div className="w-full max-w-3xl relative"> {/* Reduzido o tamanho máximo do modal */}
+          <div className="w-full max-w-3xl relative overflow-y-auto max-h-full"> {/* Permitir rolagem e definir altura máxima */}
             <div className="w-full aspect-video">
               {selectedMedia.type === 'video' ? (
                 <VideoPlayer 
