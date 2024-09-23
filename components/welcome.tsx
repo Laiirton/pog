@@ -50,13 +50,13 @@ export function Welcome({ onEnter }: WelcomeProps) {
         >
           Welcome to Pog Gallery
         </motion.h1>
-        <div className="flex w-full max-w-7xl gap-8">
+        <div className="flex flex-col md:flex-row w-full max-w-7xl gap-8">
           {/* Seção de informações e botão de entrada */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-            className="w-1/2"
+            className="w-full md:w-1/2"
           >
             <div className="bg-orange-900 bg-opacity-20 p-6 rounded-lg shadow-lg mb-8 border border-orange-500">
               <p className="text-lg mb-4 text-orange-200">
@@ -86,7 +86,7 @@ export function Welcome({ onEnter }: WelcomeProps) {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut", delay: 0.7 }}
-            className="w-1/2"
+            className="w-full md:w-1/2"
           >
             <UserRanking />
           </motion.div>
