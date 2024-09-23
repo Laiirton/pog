@@ -818,8 +818,12 @@ const SelectedMediaModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+          onClick={onClose} // Adiciona o evento de clique para fechar o modal
         >
-          <div className="w-full max-w-3xl relative overflow-y-auto max-h-full"> {/* Permitir rolagem e definir altura máxima */}
+          <div 
+            className="w-full max-w-3xl relative overflow-y-auto max-h-full" 
+            onClick={(e) => e.stopPropagation()} // Impede o fechamento ao clicar dentro da área de visualização
+          >
             <div className="w-full aspect-video">
               {selectedMedia.type === 'video' ? (
                 <VideoPlayer 
