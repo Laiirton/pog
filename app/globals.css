@@ -218,3 +218,33 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #a855f7 rgba(168, 85, 247, 0.1);
 }
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #00ff00 rgba(0, 255, 0, 0.05);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00ff00 0%, #008000 100%);
+    border-radius: 3px;
+  }
+}
+
+/* Adicione isso se ainda não existir */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

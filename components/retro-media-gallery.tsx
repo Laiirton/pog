@@ -463,18 +463,18 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     <div className="h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
       <div className="relative z-10 flex flex-col h-full">
-        <header className="bg-black bg-opacity-80 p-4 flex justify-between items-center border-b border-green-500">
-          <div className="w-1/3">
+        <header className="bg-black bg-opacity-80 p-4 flex flex-col sm:flex-row justify-between items-center border-b border-green-500">
+          <div className="w-full sm:w-1/3 mb-4 sm:mb-0">
             <Button
               onClick={() => setShowFavorites(!showFavorites)}
-              className="bg-purple-600 hover:bg-purple-700 text-black border border-purple-300 shadow-lg shadow-purple-500/50 transition-all duration-300"
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-black border border-purple-300 shadow-lg shadow-purple-500/50 transition-all duration-300"
             >
               <Heart size={20} className="mr-2" />
               Favorites
             </Button>
           </div>
           <motion.h1 
-            className="text-4xl font-bold text-center relative w-1/3"
+            className="text-3xl sm:text-4xl font-bold text-center relative w-full sm:w-1/3 mb-4 sm:mb-0"
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
@@ -498,10 +498,10 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
               Pog Gallery
             </motion.span>
           </motion.h1>
-          <div className="flex space-x-4 w-1/3 justify-end">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-1/3 justify-end">
             <Button
               onClick={() => setShowUpload(true)}
-              className="bg-green-600 hover:bg-green-700 text-black border border-green-300 shadow-lg shadow-green-500/50 transition-all duration-300"
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-black border border-green-300 shadow-lg shadow-green-500/50 transition-all duration-300"
             >
               <Upload size={20} className="mr-2" />
               Upload
@@ -509,7 +509,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             {!isAdmin && (
               <Button
                 onClick={() => setShowAdminLogin(true)}
-                className="bg-yellow-600 hover:bg-yellow-700 text-black border border-yellow-300 shadow-lg shadow-yellow-500/50 transition-all duration-300"
+                className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-black border border-yellow-300 shadow-lg shadow-yellow-500/50 transition-all duration-300"
               >
                 <User size={20} className="mr-2" />
                 Admin Login
@@ -517,7 +517,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             )}
             <Button
               onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white border border-red-300 shadow-lg shadow-red-500/50 transition-all duration-300"
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white border border-red-300 shadow-lg shadow-red-500/50 transition-all duration-300"
             >
               <LogOut size={20} className="mr-2" />
               Logout
@@ -526,9 +526,9 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
         </header>
 
         <main className="flex-grow overflow-auto custom-scrollbar">
-          <div className="max-w-7xl mx-auto p-8">
+          <div className="max-w-7xl mx-auto p-4 sm:p-8">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-green-500">Filters</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500">Filters</h2>
               <FilterComponentsComponent
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
@@ -667,9 +667,9 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           </div>
         )}
       </div>
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-2 glitch" data-text={item.title}>{item.title}</h2>
-        <p className="text-sm text-green-400 mb-1">
+      <div className="p-2 sm:p-4">
+        <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2 glitch" data-text={item.title}>{item.title}</h2>
+        <p className="text-xs sm:text-sm text-green-400 mb-1">
           Uploaded by: <span className="font-bold">{item.username || 'Unknown'}</span>
         </p>
         <p className="text-xs text-green-300">
