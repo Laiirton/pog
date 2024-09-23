@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
 'use client'
     
 // Importações necessárias para o componente
