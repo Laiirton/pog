@@ -269,7 +269,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const filteredAndSortedMediaItems = useMemo(() => {
     if (!mediaItems) return []
     
-    let filtered = mediaItems.filter(item => 
+    const filtered = mediaItems.filter(item => 
       (selectedType === 'all' || item.type === selectedType) &&
       (!selectedUser || item.username === selectedUser) &&
       (!searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
