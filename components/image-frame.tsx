@@ -90,8 +90,8 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
         <X className="h-6 w-6" />
       </Button>
 
-      <div className="absolute inset-[2px] bg-black rounded-lg overflow-hidden">
-        <div className="relative w-full h-full aspect-square">
+      <div className="absolute inset-[2px] bg-black rounded-lg overflow-hidden flex flex-col">
+        <div className="relative flex-grow">
           {/* Indicador de carregamento */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black">
@@ -117,43 +117,51 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
           )}
         </div>
         {/* Informações da imagem e botões */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
-          <div className="flex flex-col md:flex-row justify-between items-end">
-            <div className="flex-grow mb-4 md:mb-0">
-              <h2 className="text-xl font-bold mb-2 text-green-400 truncate">{alt}</h2>
-              {showInfo && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  className="space-y-1"
-                >
-                  <p className="text-sm text-green-300 flex items-center">
-                    <User size={14} className="mr-2" />
-                    <span className="text-green-400 font-semibold">{username || 'Unknown'}</span>
-                  </p>
-                  <p className="text-xs text-green-300 flex items-center">
-                    <Calendar size={14} className="mr-2" />
-                    <span className="text-green-400">{new Date(createdAt).toLocaleString()}</span>
-                  </p>
-                </motion.div>
-              )}
+        <div className="p-4 bg-gradient-to-t from-black to-transparent">
+          <div className="flex flex-col justify-between items-start">
+            <div className="w-full mb-2">
+              <h2 className="text-xl font-bold text-green-400 truncate">{alt}</h2>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setShowInfo(!showInfo)}
-                className="text-green-500 hover:text-green-400 transition-colors duration-300"
-                aria-label="Toggle image info"
+            <div className="w-full flex justify-between items-center">
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: showInfo ? 1 : 0, height: showInfo ? 'auto' : 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-1 overflow-hidden"
               >
-                <Info size={20} />
-              </button>
-              <button
-                onClick={handleDownload}
-                className="text-green-500 hover:text-green-400 transition-colors duration-300"
-                aria-label="Download image"
-              >
-                <Download size={20} />
-              </button>
+                <p className="text-sm text-green-300 flex items-center">
+                  <User size={14} className="mr-2" />
+                  <span className="text-green-400 font-semibold">{username || 'Unknown'}</span>
+                </p>
+                <p className="text-xs text-green-300 flex items-center">
+                  <Calendar size={14} className="mr-2" />
+                  <span className="text-green-400">{new Date(createdAt).toLocaleString()}</span>
+                </p>
+              </motion.div>
+              <div className="flex space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowInfo(!showInfo)
+                  }}
+                  className="bg-green-900 hover:bg-green-800 text-green-400 border-green-500"
+                >
+                  <Info size={20} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDownload()
+                  }}
+                  className="bg-green-900 hover:bg-green-800 text-green-400 border-green-500"
+                >
+                  <Download size={20} />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
