@@ -118,8 +118,8 @@ export function ImageFrame({ src, alt, username, createdAt, thumbnail, preloaded
         </div>
         {/* Informações da imagem e botões */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
-          <div className="flex justify-between items-end">
-            <div className="flex-grow">
+          <div className="flex flex-col md:flex-row justify-between items-end">
+            <div className="flex-grow mb-4 md:mb-0">
               <h2 className="text-xl font-bold mb-2 text-green-400 truncate">{alt}</h2>
               {showInfo && (
                 <motion.div
