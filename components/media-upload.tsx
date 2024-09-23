@@ -7,7 +7,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Upload, X, FileImage, FileVideo, Loader } from 'lucide-react'
 
 // Adicione esta constante no topo do arquivo, fora do componente
-const ALLOWED_FILE_TYPES = {
+const ALLOWED_FILE_TYPES: { [key: string]: boolean } = {
   'image/jpeg': true,
   'image/png': true,
   'image/gif': true,
