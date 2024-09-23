@@ -483,6 +483,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       if (response.ok) {
         const newComment = await response.json()
         setComments(prevComments => [newComment, ...prevComments])
+        // Recarregar os comentários após adicionar um novo
+        await fetchComments(mediaId)
       } else {
         throw new Error('Falha ao adicionar comentário')
       }
@@ -490,7 +492,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       console.error('Erro ao adicionar comentário:', error)
       alert('Ocorreu um erro ao adicionar o comentário. Por favor, tente novamente.')
     }
-  }, [username])
+  }, [username, fetchComments])
 
   // Filtragem dos itens favoritos
   const favoriteItems = useMemo(() => {
