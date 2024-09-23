@@ -390,9 +390,9 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 
   // Renderização do componente principal
   return (
-    <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
+    <div className="h-screen bg-black text-green-500 font-mono relative overflow-hidden">
       <MatrixRain />
-      <div className="relative z-10 flex flex-col h-screen overflow-hidden">
+      <div className="relative z-10 flex flex-col h-full">
         <header className="bg-black bg-opacity-80 p-4 flex justify-between items-center border-b border-green-500">
           <div className="w-1/3">
             {/* Espaço vazio à esquerda para balancear o layout */}
@@ -449,8 +449,8 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
           </div>
         </header>
 
-        <main className="flex-grow overflow-auto p-8 custom-scrollbar">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-grow overflow-auto custom-scrollbar">
+          <div className="max-w-7xl mx-auto p-8">
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-4 text-green-500">Filters</h2>
               <FilterComponentsComponent
@@ -471,7 +471,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             </div>
             
             <div className="mt-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredAndSortedMediaItems.map((item: MediaItem) => (
                   <MediaItem 
                     key={item.id} 
