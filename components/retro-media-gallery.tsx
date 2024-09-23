@@ -6,7 +6,7 @@ import useSWR from 'swr'
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown } from 'lucide-react'
+import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown, Heart } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
@@ -50,6 +50,11 @@ interface MediaItem {
 // Interface para definir a estrutura dos votos do usuário
 interface UserVotes {
   [mediaId: string]: number
+}
+
+// Interface para os favoritos do usuário
+interface UserFavorites {
+  [mediaId: string]: boolean
 }
 
 // Função para formatar a data
@@ -100,6 +105,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [username, setUsername] = useState<string | null>(null)
   const [userScore, setUserScore] = useState(0)
   const [userVotes, setUserVotes] = useState<UserVotes>({})
+  const [userFavorites, setUserFavorites] = useState<UserFavorites>({})
   const [sortBy, setSortBy] = useState('')
 
   const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
@@ -173,10 +179,37 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [])
 
+  // Função para buscar os favoritos do usuário
+  const fetchUserFavorites = useCallback(async () => {
+    const userToken = localStorage.getItem('username')
+    if (userToken) {
+      try {
+        const response = await fetch(`/api/favorites?token=${userToken}`)
+        if (response.ok) {
+          const data = await response.json()
+          const favorites = data.favorites.reduce((acc: UserFavorites, favoriteId: string) => {
+            acc[favoriteId] = true
+            return acc
+          }, {})
+          setUserFavorites(favorites)
+        } else {
+          console.error('Failed to fetch user favorites')
+        }
+      } catch (error) {
+        console.error('Error fetching user favorites:', error)
+      }
+    }
+  }, [])
+
   // Efeito para carregar os votos do usuário ao abrir a página
   useEffect(() => {
     fetchUserVotes()
   }, [fetchUserVotes])
+
+  // Efeito para carregar os favoritos do usuário ao abrir a página
+  useEffect(() => {
+    fetchUserFavorites()
+  }, [fetchUserFavorites])
 
   // Função para lidar com o logout
   const handleLogout = useCallback(() => {
@@ -269,7 +302,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const filteredAndSortedMediaItems = useMemo(() => {
     if (!mediaItems) return []
     
-    const filtered = mediaItems.filter(item => 
+    let filtered = mediaItems.filter(item => 
       (selectedType === 'all' || item.type === selectedType) &&
       (!selectedUser || item.username === selectedUser) &&
       (!searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -377,6 +410,34 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }
 
+  // Função para lidar com a adição/remoção de favoritos
+  const handleFavorite = async (mediaId: string) => {
+    if (!username) {
+      alert('Você precisa estar logado para favoritar.')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: localStorage.getItem('username'), mediaId }),
+      })
+
+      if (response.ok) {
+        setUserFavorites(prev => ({
+          ...prev,
+          [mediaId]: !prev[mediaId]
+        }))
+      } else {
+        throw new Error('Falha ao atualizar favorito')
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar favorito:', error)
+      alert('Ocorreu um erro ao atualizar o favorito. Por favor, tente novamente.')
+    }
+  }
+
   // Tratamento de erro na busca de mídia
   if (error) {
     console.error('Error fetching media:', error)
@@ -481,8 +542,10 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     preloadImage={preloadImage}
                     getCachedImage={getCachedImage}
                     onVote={handleVote}
+                    onFavorite={handleFavorite}
                     username={username}
                     userVote={userVotes[item.id]}
+                    isFavorite={userFavorites[item.id]}
                     imageCache={imageCache}
                   />
                 ))}
@@ -519,15 +582,17 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 }
 
 // Componente para exibir um item de mídia individual
-const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, username, userVote, imageCache }: { 
+const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, onFavorite, username, userVote, isFavorite, imageCache }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void
   preloadImage: (src: string) => Promise<void>
   getCachedImage: (src: string) => string | null
   onVote: (mediaId: string, voteType: number) => void
+  onFavorite: (mediaId: string) => void
   username: string | null
   userVote?: number
+  isFavorite?: boolean
   imageCache: Record<string, string>
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -607,6 +672,16 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           >
             <span className="mr-1">{item.downvotes}</span>
             <ArrowBigDown size={20} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onFavorite(item.id)
+            }}
+            className={`flex items-center p-1 rounded ${isFavorite ? 'text-red-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            disabled={!username}
+          >
+            <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
         </div>
       </div>
