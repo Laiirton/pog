@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { AdminLogin } from './admin-login'
 import { LoadingAnimation } from './loading-animation'
 import { useImagePreloader } from '../hooks/useImagePreloader'
+import { FavoritesList } from './favorites-list'
 
 // Função para buscar dados da API
 const fetcher = async (url: string): Promise<MediaItem[]> => {
@@ -34,7 +35,7 @@ const fetcher = async (url: string): Promise<MediaItem[]> => {
 }
 
 // Interface para definir a estrutura de um item de mídia
-interface MediaItem {
+export interface MediaItem {
   id: string
   title: string
   type: 'video' | 'image'
@@ -107,6 +108,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [userVotes, setUserVotes] = useState<UserVotes>({})
   const [userFavorites, setUserFavorites] = useState<UserFavorites>({})
   const [sortBy, setSortBy] = useState('')
+  const [showFavorites, setShowFavorites] = useState(false)
 
   const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
 
@@ -438,6 +440,12 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }
 
+  // Filtragem dos itens favoritos
+  const favoriteItems = useMemo(() => {
+    if (!mediaItems) return []
+    return mediaItems.filter(item => userFavorites[item.id])
+  }, [mediaItems, userFavorites])
+
   // Tratamento de erro na busca de mídia
   if (error) {
     console.error('Error fetching media:', error)
@@ -456,7 +464,13 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       <div className="relative z-10 flex flex-col h-full">
         <header className="bg-black bg-opacity-80 p-4 flex justify-between items-center border-b border-green-500">
           <div className="w-1/3">
-            {/* Espaço vazio à esquerda para balancear o layout */}
+            <Button
+              onClick={() => setShowFavorites(!showFavorites)}
+              className="bg-purple-600 hover:bg-purple-700 text-black border border-purple-300 shadow-lg shadow-purple-500/50 transition-all duration-300"
+            >
+              <Heart size={20} className="mr-2" />
+              Favorites
+            </Button>
           </div>
           <motion.h1 
             className="text-4xl font-bold text-center relative w-1/3"
@@ -574,6 +588,16 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       {showAdminLogin && (
         <AdminLogin onLogin={handleAdminLogin} onClose={() => setShowAdminLogin(false)} />
       )}
+      {showFavorites && (
+        <FavoritesList
+          favorites={favoriteItems}
+          onClose={() => setShowFavorites(false)}
+          onSelectMedia={(media) => {
+            setSelectedMedia(media)
+            setShowFavorites(false)
+          }}
+        />
+      )}
       <div className="text-green-500">
         Score do usuário: {userScore}
       </div>
@@ -678,7 +702,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
               e.stopPropagation()
               onFavorite(item.id)
             }}
-            className={`flex items-center p-1 rounded ${isFavorite ? 'text-red-500' : 'text-green-500'} hover:bg-green-900 transition-colors duration-300`}
+            className={`flex items-center p-1 rounded ${isFavorite ? 'text-pink-500' : 'text-purple-500'} hover:bg-purple-900 transition-colors duration-300`}
             disabled={!username}
           >
             <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
