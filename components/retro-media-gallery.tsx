@@ -19,6 +19,7 @@ import { AdminLogin } from './admin-login'
 import { LoadingAnimation } from './loading-animation'
 import { useImagePreloader } from '../hooks/useImagePreloader'
 import { FavoritesList } from './favorites-list'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 // Função para buscar dados da API
 const fetcher = async (url: string): Promise<MediaItem[]> => {
@@ -602,6 +603,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       <div className="text-green-500">
         Score do usuário: {userScore}
       </div>
+      <SpeedInsights />
     </div>
   )
 }
