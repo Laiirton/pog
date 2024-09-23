@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
 
 // Inicialize o cliente Supabase
 const supabase = createClient(
@@ -32,16 +33,31 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { mediaId, username, content } = await req.json();
-
-  if (!mediaId || !username || !content) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-  }
-
   try {
+    const { mediaId, username, content } = await req.json();
+
+    if (!mediaId || !username || !content) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Decodificar o token JWT para extrair o nome de usuário
+    let decodedUsername;
+    try {
+      const decoded = jwt.decode(username);
+      console.log('Decoded token:', decoded); // Adiciona log para verificar o conteúdo do token decodificado
+      if (typeof decoded === 'object' && decoded !== null && 'username' in decoded) {
+        decodedUsername = decoded.username;
+      } else {
+        throw new Error('Invalid token');
+      }
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return NextResponse.json({ error: 'Invalid username token' }, { status: 400 });
+    }
+
     const { data, error } = await supabase
       .from('comments')
-      .insert({ media_id: mediaId, username, content })
+      .insert({ media_id: mediaId, username: decodedUsername, content })
       .single();
 
     if (error) throw error;
