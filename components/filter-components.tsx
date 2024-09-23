@@ -24,6 +24,8 @@ interface FilterComponentsProps {
   endDate: Date | null;
   setEndDate: React.Dispatch<React.SetStateAction<Date | null>>;
   allUsers: string[];
+  sortBy: string;
+  setSortBy: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // Componente principal de filtros
@@ -38,7 +40,9 @@ export function FilterComponentsComponent({
   setStartDate,
   endDate,
   setEndDate,
-  allUsers
+  allUsers,
+  sortBy,
+  setSortBy
 }: FilterComponentsProps) {
   // Estados para armazenar o input do usuário, usuários filtrados e visibilidade da lista de usuários
   const [userInput, setUserInput] = useState(selectedUser);
@@ -96,9 +100,9 @@ export function FilterComponentsComponent({
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="flex flex-wrap gap-4 mb-6 items-end">
       {/* Filtro por tipo */}
-      <div className="flex flex-col">
+      <div className="flex-1 min-w-[120px]">
         <Label htmlFor="type-select" className="mb-2">Type</Label>
         <select
           id="type-select"
@@ -113,7 +117,7 @@ export function FilterComponentsComponent({
       </div>
 
       {/* Filtro por usuário */}
-      <div className="flex flex-col relative" ref={userInputRef}>
+      <div className="flex-1 min-w-[120px] relative" ref={userInputRef}>
         <Label htmlFor="user-input" className="mb-2">User</Label>
         <div className="relative">
           <Input
@@ -150,7 +154,7 @@ export function FilterComponentsComponent({
       </div>
 
       {/* Filtro por título */}
-      <div className="flex flex-col">
+      <div className="flex-1 min-w-[120px]">
         <Label htmlFor="title-input" className="mb-2">Title</Label>
         <Input
           id="title-input"
@@ -163,7 +167,7 @@ export function FilterComponentsComponent({
       </div>
 
       {/* Filtro por data */}
-      <div className="flex flex-col">
+      <div className="flex-1 min-w-[120px]">
         <Label className="mb-2">Date</Label>
         <Popover>
           <PopoverTrigger asChild>
@@ -184,6 +188,21 @@ export function FilterComponentsComponent({
             />
           </PopoverContent>
         </Popover>
+      </div>
+
+      {/* Filtro de ordenação por upvotes/downvotes */}
+      <div className="flex-1 min-w-[120px]">
+        <Label htmlFor="sort-select" className="mb-2">Sort by</Label>
+        <select
+          id="sort-select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="bg-black text-green-500 border border-green-500 rounded p-2 w-full"
+        >
+          <option value="">None</option>
+          <option value="upvotes">Most Upvotes</option>
+          <option value="downvotes">Most Downvotes</option>
+        </select>
       </div>
     </div>
   )
