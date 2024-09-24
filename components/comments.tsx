@@ -40,7 +40,7 @@ export function Comments({ comments, onAddComment, username }: CommentsProps) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-green-400 flex items-center">
             <MessageSquare className="mr-2" size={20} />
-            Comments
+            Comments ({comments.length})
           </h3>
           <Button 
             onClick={() => setShowComments(!showComments)} 
