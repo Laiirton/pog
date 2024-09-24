@@ -68,6 +68,11 @@ interface UserFavorites {
   [mediaId: string]: boolean
 }
 
+// Interface para a contagem de favoritos
+interface FavoriteCounts {
+  [mediaId: string]: number
+}
+
 // Função para formatar a data
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
@@ -117,6 +122,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [userScore, setUserScore] = useState(0)
   const [userVotes, setUserVotes] = useState<UserVotes>({})
   const [userFavorites, setUserFavorites] = useState<UserFavorites>({})
+  const [favoriteCounts, setFavoriteCounts] = useState<FavoriteCounts>({})
   const [sortBy, setSortBy] = useState('')
   const [showFavorites, setShowFavorites] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
@@ -214,6 +220,25 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     }
   }, [])
 
+  // Função para buscar a contagem de favoritos
+  const fetchFavoriteCounts = useCallback(async () => {
+    try {
+      const response = await fetch('/api/media-favorites')
+      if (response.ok) {
+        const data = await response.json()
+        const counts = Object.keys(data).reduce((acc: FavoriteCounts, mediaId: string) => {
+          acc[mediaId] = data[mediaId].count
+          return acc
+        }, {})
+        setFavoriteCounts(counts)
+      } else {
+        console.error('Failed to fetch favorite counts')
+      }
+    } catch (error) {
+      console.error('Error fetching favorite counts:', error)
+    }
+  }, [])
+
   // Efeito para carregar os votos do usuário ao abrir a página
   useEffect(() => {
     fetchUserVotes()
@@ -223,6 +248,11 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   useEffect(() => {
     fetchUserFavorites()
   }, [fetchUserFavorites])
+
+  // Efeito para carregar a contagem de favoritos ao abrir a página
+  useEffect(() => {
+    fetchFavoriteCounts()
+  }, [fetchFavoriteCounts])
 
   // Função para lidar com o logout
   const handleLogout = useCallback(() => {
@@ -614,6 +644,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                     username={username}
                     userVote={userVotes[item.id]}
                     isFavorite={userFavorites[item.id]}
+                    favoriteCount={favoriteCounts[item.id] || 0}
                     imageCache={imageCache}
                   />
                 ))}
@@ -669,7 +700,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
 }
 
 // Componente para exibir um item de mídia individual
-const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, onFavorite, username, userVote, isFavorite, imageCache }: { 
+const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVote, onFavorite, username, userVote, isFavorite, favoriteCount, imageCache }: { 
   item: MediaItem; 
   onClick: () => void; 
   onDelete?: () => void
@@ -680,6 +711,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
   username: string | null
   userVote?: number
   isFavorite?: boolean
+  favoriteCount: number
   imageCache: Record<string, string>
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -769,6 +801,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
             disabled={!username}
           >
             <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
+            <span className="ml-1">{favoriteCount}</span>
           </button>
         </div>
       </div>
