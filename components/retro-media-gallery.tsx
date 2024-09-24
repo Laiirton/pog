@@ -472,6 +472,13 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
           ...prev,
           [mediaId]: !prev[mediaId]
         }))
+        // Atualizar a contagem de favoritos localmente
+        setFavoriteCounts(prevCounts => ({
+          ...prevCounts,
+          [mediaId]: prevCounts[mediaId] 
+            ? prevCounts[mediaId] + (userFavorites[mediaId] ? -1 : 1) 
+            : 1
+        }))
       } else {
         throw new Error('Falha ao atualizar favorito')
       }
