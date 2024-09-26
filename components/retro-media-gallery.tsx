@@ -745,7 +745,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
     >
-      <div className="relative aspect-video">
+      <div className="relative aspect-video h-50">
         {!imageError ? (
           <Image
             src={imageSrc}
