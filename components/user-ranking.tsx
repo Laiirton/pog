@@ -14,20 +14,27 @@ interface RankingItem {
 export function UserRanking() {
   // Estado para armazenar os dados do ranking
   const [ranking, setRanking] = useState<RankingItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Função para buscar os dados do ranking
     const fetchRanking = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
         const response = await fetch('/api/user-ranking');
-        if (response.ok) {
-          const data = await response.json();
-          setRanking(data);
-        } else {
-          console.error('Failed to fetch ranking');
+        if (!response.ok) {
+          throw new Error('Falha ao carregar o ranking');
         }
+        const data = await response.json();
+        // Verifica se data é um array e se tem conteúdo
+        setRanking(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Error fetching ranking:', error);
+        console.error('Erro ao buscar ranking:', error);
+        setError('Não foi possível carregar o ranking');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -45,11 +52,23 @@ export function UserRanking() {
         <Trophy className="inline-block mr-2 mb-1" size={28} />
         The Poggers
       </h2>
-      <ul className="space-y-3 relative z-10">
-        {ranking.length > 0 ? (
-          ranking.map((item, index) => (
+
+      {isLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center text-red-400 py-4">{error}</div>
+      ) : ranking.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-xl text-cyan-300 italic">Nenhum upload ainda...</p>
+          <p className="text-sm text-cyan-400 mt-2">Seja o primeiro a fazer upload!</p>
+        </div>
+      ) : (
+        <ul className="space-y-3 relative z-10">
+          {ranking.map((item, index) => (
             <motion.li
-              key={item.username}
+              key={`${item.username}-${index}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
@@ -78,11 +97,9 @@ export function UserRanking() {
                 </span>
               </div>
             </motion.li>
-          ))
-        ) : (
-          <li className="text-center text-xl italic text-cyan-300">No uploads yet</li>
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

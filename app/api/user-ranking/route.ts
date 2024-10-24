@@ -20,12 +20,16 @@ interface UserStats {
 // Função para lidar com requisições GET
 export async function GET() {
   try {
-    // Primeiro, vamos buscar apenas os usuários ativos da tabela usernames
     const { data: activeUsers, error: usersError } = await supabase
       .from('usernames')
       .select('username')
 
     if (usersError) throw usersError;
+
+    // Se não houver usuários ativos, retorna array vazio imediatamente
+    if (!activeUsers || activeUsers.length === 0) {
+      return NextResponse.json([]);
+    }
 
     // Criar um Set com os usernames ativos para consulta rápida
     const activeUsernames = new Set(activeUsers.map(user => user.username));
@@ -71,10 +75,9 @@ export async function GET() {
       })
       .slice(0, 10);
 
-    // Retorna os dados como resposta JSON
-    return NextResponse.json(ranking);
+    // Garante que sempre retorne um array, mesmo que vazio
+    return NextResponse.json(ranking || []);
   } catch (error) {
-    // Em caso de erro, registra no console e retorna uma resposta de erro
     console.error('Error fetching user ranking:', error);
     return NextResponse.json({ error: 'Error fetching user ranking' }, { status: 500 });
   }
