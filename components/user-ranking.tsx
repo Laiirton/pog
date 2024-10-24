@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, ArrowBigUp, ArrowBigDown } from 'lucide-react';
+import { Trophy, ArrowBigUp, ArrowBigDown, Upload } from 'lucide-react';
 
 // Define a interface para os itens do ranking
 interface RankingItem {
@@ -55,12 +55,18 @@ export function UserRanking() {
               transition={{ duration: 0.4, delay: index * 0.1 }}
               className="flex justify-between items-center py-2 border-b border-cyan-500 last:border-b-0 hover:bg-blue-900/30 rounded-md px-2 group"
             >
-              <span className="text-lg flex items-center">
-                <span className="mr-3 font-mono text-xl font-bold text-cyan-300">
-                  {(index + 1).toString().padStart(2, '0')}
+              <div className="flex flex-col">
+                <span className="text-lg flex items-center">
+                  <span className="mr-3 font-mono text-xl font-bold text-cyan-300">
+                    {(index + 1).toString().padStart(2, '0')}
+                  </span>
+                  <span className="truncate">{item.username}</span>
                 </span>
-                <span className="truncate">{item.username}</span>
-              </span>
+                <span className="text-sm text-cyan-500 flex items-center ml-8 mt-1">
+                  <Upload size={14} className="mr-1" />
+                  {item.upload_count} uploads
+                </span>
+              </div>
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-sm bg-green-500 text-black px-2 py-1 rounded-full shadow-md flex items-center">
                   <ArrowBigUp className="mr-1" size={14} />
