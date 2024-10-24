@@ -21,6 +21,7 @@ import { FavoritesList } from './favorites-list'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Comments } from './comments'
 import { UserRanking } from './user-ranking'
+import { AdminPanel } from './admin-panel'
 
 // Função para buscar dados da API
 const fetcher = async (url: string): Promise<MediaItem[]> => {
@@ -128,6 +129,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [showFavorites, setShowFavorites] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
   const [showRanking, setShowRanking] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
 
   const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
 
@@ -614,6 +616,15 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
                 Admin Login
               </Button>
             )}
+            {isAdmin && (
+              <Button
+                onClick={() => setShowAdminPanel(true)}
+                className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-black border border-yellow-300 shadow-lg shadow-yellow-500/50 transition-all duration-300"
+              >
+                <User size={20} className="mr-2" />
+                Admin Panel
+              </Button>
+            )}
             <Button
               onClick={handleLogout}
               className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white border border-red-300 shadow-lg shadow-red-500/50 transition-all duration-300"
@@ -732,6 +743,9 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             <UserRanking />
           </motion.div>
         </motion.div>
+      )}
+      {showAdminPanel && (
+        <AdminPanel onClose={() => setShowAdminPanel(false)} adminToken={adminToken} />
       )}
       <div className="text-green-500">
         Score do usuário: {userScore}
