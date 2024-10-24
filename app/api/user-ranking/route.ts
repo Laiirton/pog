@@ -20,7 +20,7 @@ interface UserStats {
 // Função para lidar com requisições GET
 export async function GET() {
   try {
-    // Consultando o banco de dados para obter o ranking de usuários
+    // Consultando o banco de dados para obter todas as mídias com seus dados
     const { data, error } = await supabase
       .from('media_uploads')
       .select('username, upvotes, downvotes')
@@ -30,12 +30,20 @@ export async function GET() {
 
     // Agregar os dados por usuário
     const userStats = data.reduce((acc: Record<string, UserStats>, item) => {
+      // Se o usuário não existe no acumulador, cria uma nova entrada
       if (!acc[item.username]) {
-        acc[item.username] = { upload_count: 0, upvotes: 0, downvotes: 0 };
+        acc[item.username] = {
+          upload_count: 0,
+          upvotes: 0,
+          downvotes: 0
+        };
       }
-      acc[item.username].upload_count++;
-      acc[item.username].upvotes += item.upvotes;
-      acc[item.username].downvotes += item.downvotes;
+
+      // Incrementa o contador de uploads e soma os votos
+      acc[item.username].upload_count += 1; // Cada item representa um upload
+      acc[item.username].upvotes += item.upvotes || 0;
+      acc[item.username].downvotes += item.downvotes || 0;
+
       return acc;
     }, {});
 
@@ -47,7 +55,15 @@ export async function GET() {
         upvotes: stats.upvotes,
         downvotes: stats.downvotes
       }))
-      .sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes) || b.upload_count - a.upload_count)
+      .sort((a, b) => {
+        // Primeiro critério: diferença entre upvotes e downvotes
+        const scoreA = a.upvotes - a.downvotes;
+        const scoreB = b.upvotes - b.downvotes;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        
+        // Segundo critério: quantidade de uploads
+        return b.upload_count - a.upload_count;
+      })
       .slice(0, 10); // Pegar os top 10
 
     // Retorna os dados como resposta JSON
