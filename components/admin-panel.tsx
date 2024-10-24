@@ -44,7 +44,7 @@ export function AdminPanel({ onClose, adminToken }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [users, setUsers] = useState<User[]>([])
   const [mediaStats, setMediaStats] = useState<MediaStats | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -72,7 +72,7 @@ export function AdminPanel({ onClose, adminToken }: AdminPanelProps) {
       } catch (error) {
         console.error('Error fetching admin data:', error)
       } finally {
-        setIsLoading(false)
+        setLoading(false)
       }
     }
 
@@ -352,11 +352,6 @@ export function AdminPanel({ onClose, adminToken }: AdminPanelProps) {
           </div>
         </div>
       </div>
-      {isLoading ? (
-        <div className="flex items-center justify-center h-full">
-          <span className="loading loading-spinner loading-lg"></span>
-        </div>
-      ) : null}
     </motion.div>
   )
 }
