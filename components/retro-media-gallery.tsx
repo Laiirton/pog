@@ -6,7 +6,7 @@
 import useSWR from 'swr'
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown, Heart } from 'lucide-react'
+import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown, Heart, Trophy } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
@@ -20,6 +20,7 @@ import { useImagePreloader } from '../hooks/useImagePreloader'
 import { FavoritesList } from './favorites-list'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Comments } from './comments'
+import { UserRanking } from './user-ranking'
 
 // Função para buscar dados da API
 const fetcher = async (url: string): Promise<MediaItem[]> => {
@@ -126,6 +127,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [sortBy, setSortBy] = useState('')
   const [showFavorites, setShowFavorites] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
+  const [showRanking, setShowRanking] = useState(false)
 
   const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
 
@@ -554,13 +556,20 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
       <MatrixRain />
       <div className="relative z-10 flex flex-col h-full">
         <header className="bg-black bg-opacity-80 p-4 flex flex-col sm:flex-row justify-between items-center border-b border-green-500">
-          <div className="w-full sm:w-1/3 mb-4 sm:mb-0">
+          <div className="w-full sm:w-1/3 mb-4 sm:mb-0 flex gap-2">
             <Button
               onClick={() => setShowFavorites(!showFavorites)}
               className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-black border border-purple-300 shadow-lg shadow-purple-500/50 transition-all duration-300"
             >
               <Heart size={20} className="mr-2" />
               Favorites
+            </Button>
+            <Button
+              onClick={() => setShowRanking(!showRanking)}
+              className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-black border border-orange-300 shadow-lg shadow-orange-500/50 transition-all duration-300"
+            >
+              <Trophy size={20} className="mr-2" />
+              Ranking
             </Button>
           </div>
           <motion.h1 
@@ -697,6 +706,34 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             setShowFavorites(false)
           }}
         />
+      )}
+      {showRanking && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
+          onClick={() => setShowRanking(false)}
+        >
+          <motion.div
+            className="w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <div className="relative">
+              <button
+                onClick={() => setShowRanking(false)}
+                className="absolute -top-2 -right-2 text-orange-500 hover:text-orange-300 transition-colors duration-200 z-10"
+                aria-label="Close"
+              >
+                <X size={24} />
+              </button>
+              <UserRanking />
+            </div>
+          </motion.div>
+        </motion.div>
       )}
       <div className="text-green-500">
         Score do usuário: {userScore}
