@@ -6,7 +6,7 @@
 import useSWR from 'swr'
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown, Heart, Trophy } from 'lucide-react'
+import { X, LogOut, Trash2, Upload, User, ArrowBigUp, ArrowBigDown, Heart, Trophy, Settings } from 'lucide-react'
 import { VideoPlayer } from './video-player'
 import { ImageFrame } from './image-frame'
 import { MediaUpload } from './media-upload'
@@ -21,6 +21,7 @@ import { FavoritesList } from './favorites-list'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Comments } from './comments'
 import { UserRanking } from './user-ranking'
+import { AdminPanel } from './admin-panel'
 
 // Função para buscar dados da API
 const fetcher = async (url: string): Promise<MediaItem[]> => {
@@ -128,6 +129,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   const [showFavorites, setShowFavorites] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
   const [showRanking, setShowRanking] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
 
   const { preloadImage, getCachedImage, preloadImages, imageCache } = useImagePreloader()
 
@@ -605,13 +607,21 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
               <Upload size={20} className="mr-2" />
               Upload
             </Button>
-            {!isAdmin && (
+            {!isAdmin ? (
               <Button
                 onClick={() => setShowAdminLogin(true)}
                 className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-black border border-yellow-300 shadow-lg shadow-yellow-500/50 transition-all duration-300"
               >
                 <User size={20} className="mr-2" />
                 Admin Login
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setShowAdminPanel(true)}
+                className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-black border border-purple-300 shadow-lg shadow-purple-500/50 transition-all duration-300"
+              >
+                <Settings size={20} className="mr-2" />
+                Admin Panel
               </Button>
             )}
             <Button
@@ -732,6 +742,12 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             <UserRanking />
           </motion.div>
         </motion.div>
+      )}
+      {showAdminPanel && (
+        <AdminPanel
+          onClose={() => setShowAdminPanel(false)}
+          adminToken={adminToken}
+        />
       )}
       <div className="text-green-500">
         Score do usuário: {userScore}
