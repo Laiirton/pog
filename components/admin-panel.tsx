@@ -76,26 +76,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [mediaRes, commentsRes, usersRes, favoritesRes] = await Promise.all([
-        fetch('/api/admin/media', {
-          headers: { 'admin-token': adminToken }
-        }),
-        fetch('/api/admin/comments', {
-          headers: { 'admin-token': adminToken }
-        }),
-        fetch('/api/admin/users', {
-          headers: { 'admin-token': adminToken }
-        }),
-        fetch('/api/admin/favorites', {
-          headers: { 'admin-token': adminToken }
-        })
-      ]);
-
+      const headers = { 'admin-token': adminToken };
       const [mediaData, commentsData, usersData, favoritesData] = await Promise.all([
-        mediaRes.json(),
-        commentsRes.json(),
-        usersRes.json(),
-        favoritesRes.json()
+        fetch('/api/admin/media', { headers }).then(res => res.json()),
+        fetch('/api/admin/comments', { headers }).then(res => res.json()),
+        fetch('/api/admin/users', { headers }).then(res => res.json()),
+        fetch('/api/admin/favorites', { headers }).then(res => res.json())
       ]);
 
       setMediaData(mediaData);
@@ -128,11 +114,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
         headers: { 'admin-token': adminToken }
       });
 
-      if (response.ok) {
-        await fetchData();
-      } else {
+      if (!response.ok) {
         throw new Error(`Failed to delete ${type}`);
       }
+
+      await fetchData();
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
       alert(`Failed to delete ${type}. Please try again.`);
