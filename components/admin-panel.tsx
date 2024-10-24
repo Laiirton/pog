@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trash2, 
@@ -20,13 +20,17 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface MediaUpload {
-  id: number;
+// Interfaces para os tipos de dados
+interface BaseItem {
+  id: number | string;
+  created_at: string;
+}
+
+interface MediaUpload extends BaseItem {
   file_id: string;
   file_name: string;
   mime_type: string;
   username: string;
-  created_at: string;
   google_drive_link: string;
   thumbnail_link: string;
   vote_count: number;
@@ -34,26 +38,20 @@ interface MediaUpload {
   downvotes: number;
 }
 
-interface Comment {
-  id: string;
+interface Comment extends BaseItem {
   media_id: string;
   username: string;
   content: string;
-  created_at: string;
 }
 
-interface Username {
-  id: number;
+interface Username extends BaseItem {
   username: string;
-  created_at: string;
-  votes: Record<string, any>;
+  votes: Record<string, unknown>;
 }
 
-interface UserFavorite {
-  id: number;
+interface UserFavorite extends BaseItem {
   username: string;
   media_id: string;
-  created_at: string;
 }
 
 interface AdminPanelProps {
@@ -61,19 +59,26 @@ interface AdminPanelProps {
   adminToken: string;
 }
 
+type DataType = MediaUpload | Comment | Username | UserFavorite;
+type TabType = 'media' | 'users' | 'comments' | 'favorites';
+type SortConfig = {
+  key: string;
+  direction: 'asc' | 'desc';
+};
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) => {
-  const [activeTab, setActiveTab] = useState<'media' | 'users' | 'comments' | 'favorites'>('media');
+  const [activeTab, setActiveTab] = useState<TabType>('media');
   const [mediaData, setMediaData] = useState<MediaUpload[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [users, setUsers] = useState<Username[]>([]);
   const [favorites, setFavorites] = useState<UserFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'created_at', direction: 'desc' });
+  const [selectedItem, setSelectedItem] = useState<DataType | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const headers = { 'admin-token': adminToken };
@@ -93,11 +98,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [adminToken]);
 
   useEffect(() => {
     fetchData();
-  }, [adminToken]);
+  }, [fetchData]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -105,7 +110,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
     setIsRefreshing(false);
   };
 
-  const handleDelete = async (type: string, id: string) => {
+  const handleDelete = async (type: TabType, id: string | number) => {
     if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
 
     try {
@@ -132,24 +137,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
     }));
   };
 
-  const sortData = (data: any[]) => {
+  const sortData = <T extends DataType>(data: T[]): T[] => {
     return [...data].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+      const aValue = a[sortConfig.key as keyof T];
+      const bValue = b[sortConfig.key as keyof T];
       
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortConfig.direction === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
       
-      return sortConfig.direction === 'asc' 
-        ? aValue - bValue
-        : bValue - aValue;
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' 
+          ? aValue - bValue
+          : bValue - aValue;
+      }
+
+      return 0;
     });
   };
 
-  const filterData = (data: any[]) => {
+  const filterData = <T extends DataType>(data: T[]): T[] => {
     return data.filter(item => 
       Object.values(item).some(value => 
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
@@ -163,7 +172,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
   };
 
   const renderTable = () => {
-    let data: any[] = [];
+    let data: DataType[] = [];
     let columns: string[] = [];
 
     switch (activeTab) {
@@ -219,8 +228,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
                 {columns.map(column => (
                   <td key={column} className="p-3">
                     {column === 'created_at'
-                      ? format(new Date(item[column]), 'yyyy-MM-dd HH:mm:ss')
-                      : String(item[column])}
+                      ? format(new Date(item[column as keyof DataType] as string), 'yyyy-MM-dd HH:mm:ss')
+                      : String(item[column as keyof DataType])}
                   </td>
                 ))}
                 <td className="p-3 text-center">
