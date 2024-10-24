@@ -25,14 +25,14 @@ export function UserRanking() {
         setError(null);
         const response = await fetch('/api/user-ranking');
         if (!response.ok) {
-          throw new Error('Falha ao carregar o ranking');
+          throw new Error('Failed to load ranking');
         }
         const data = await response.json();
         // Verifica se data é um array e se tem conteúdo
         setRanking(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Erro ao buscar ranking:', error);
-        setError('Não foi possível carregar o ranking');
+        setError('Failed to load ranking');
       } finally {
         setIsLoading(false);
       }
@@ -61,8 +61,8 @@ export function UserRanking() {
         <div className="text-center text-red-400 py-4">{error}</div>
       ) : ranking.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-xl text-cyan-300 italic">Nenhum upload ainda...</p>
-          <p className="text-sm text-cyan-400 mt-2">Seja o primeiro a fazer upload!</p>
+          <p className="text-xl text-cyan-300 italic">No uploads yet...</p>
+          <p className="text-sm text-cyan-400 mt-2">Be the first to upload!</p>
         </div>
       ) : (
         <ul className="space-y-3 relative z-10">
