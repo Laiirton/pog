@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAdminToken } from '@/lib/auth'
-import prisma from '@/lib/prisma'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function GET(req: NextRequest) {
   try {
-    // Verificar token de admin
     const adminToken = req.headers.get('admin-token')
     if (!verifyAdminToken(adminToken)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Buscar todos os usuários
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        username: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        lastLogin: true
-      }
-    })
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, username, role, status, created_at, last_login')
+
+    if (error) throw error
 
     return NextResponse.json(users)
   } catch (error) {
@@ -41,10 +39,14 @@ export async function PUT(req: NextRequest) {
 
     const { id, ...userData } = await req.json()
 
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: userData
-    })
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update(userData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
 
     return NextResponse.json(updatedUser)
   } catch (error) {

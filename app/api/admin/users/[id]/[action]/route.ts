@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAdminToken } from '@/lib/auth'
-import prisma from '@/lib/prisma'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(
   req: NextRequest,
@@ -16,23 +21,27 @@ export async function POST(
 
     switch (action) {
       case 'ban':
-        await prisma.user.update({
-          where: { id },
-          data: { status: 'banned' }
-        })
+        const { error: banError } = await supabase
+          .from('users')
+          .update({ status: 'banned' })
+          .eq('id', id)
+        if (banError) throw banError
         break
       
       case 'unban':
-        await prisma.user.update({
-          where: { id },
-          data: { status: 'active' }
-        })
+        const { error: unbanError } = await supabase
+          .from('users')
+          .update({ status: 'active' })
+          .eq('id', id)
+        if (unbanError) throw unbanError
         break
       
       case 'delete':
-        await prisma.user.delete({
-          where: { id }
-        })
+        const { error: deleteError } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', id)
+        if (deleteError) throw deleteError
         break
       
       default:
