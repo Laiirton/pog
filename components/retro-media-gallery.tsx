@@ -566,7 +566,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
             </Button>
             <Button
               onClick={() => setShowRanking(!showRanking)}
-              className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-black border border-orange-300 shadow-lg shadow-orange-500/50 transition-all duration-300"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-black border border-cyan-300 shadow-lg shadow-cyan-500/50 transition-all duration-300"
             >
               <Trophy size={20} className="mr-2" />
               Ranking
@@ -716,22 +716,20 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
           onClick={() => setShowRanking(false)}
         >
           <motion.div
-            className="w-full max-w-md"
+            className="w-full max-w-md relative" // Adicionado relative aqui
             onClick={(e) => e.stopPropagation()}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
           >
-            <div className="relative">
-              <button
-                onClick={() => setShowRanking(false)}
-                className="absolute -top-2 -right-2 text-orange-500 hover:text-orange-300 transition-colors duration-200 z-10"
-                aria-label="Close"
-              >
-                <X size={24} />
-              </button>
-              <UserRanking />
-            </div>
+            <button
+              onClick={() => setShowRanking(false)}
+              className="absolute -top-4 -right-4 w-8 h-8 bg-black rounded-full border-2 border-cyan-500 text-cyan-500 hover:text-cyan-300 hover:border-cyan-300 transition-colors duration-200 z-10 flex items-center justify-center"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+            <UserRanking />
           </motion.div>
         </motion.div>
       )}
@@ -934,3 +932,4 @@ const SelectedMediaModal = ({
     </AnimatePresence>
   )
 }
+
