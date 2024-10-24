@@ -20,17 +20,26 @@ interface UserStats {
 // Função para lidar com requisições GET
 export async function GET() {
   try {
-    // Consultando o banco de dados para obter todas as mídias com seus dados
-    const { data, error } = await supabase
+    // Primeiro, vamos buscar apenas os usuários ativos da tabela usernames
+    const { data: activeUsers, error: usersError } = await supabase
+      .from('usernames')
+      .select('username')
+
+    if (usersError) throw usersError;
+
+    // Criar um Set com os usernames ativos para consulta rápida
+    const activeUsernames = new Set(activeUsers.map(user => user.username));
+
+    // Agora buscamos as mídias apenas desses usuários ativos
+    const { data: mediaData, error: mediaError } = await supabase
       .from('media_uploads')
       .select('username, upvotes, downvotes')
+      .in('username', Array.from(activeUsernames))
 
-    // Se houver um erro na consulta, lança uma exceção
-    if (error) throw error;
+    if (mediaError) throw mediaError;
 
-    // Agregar os dados por usuário
-    const userStats = data.reduce((acc: Record<string, UserStats>, item) => {
-      // Se o usuário não existe no acumulador, cria uma nova entrada
+    // Agregar os dados apenas dos usuários ativos
+    const userStats = mediaData.reduce((acc: Record<string, UserStats>, item) => {
       if (!acc[item.username]) {
         acc[item.username] = {
           upload_count: 0,
@@ -39,8 +48,7 @@ export async function GET() {
         };
       }
 
-      // Incrementa o contador de uploads e soma os votos
-      acc[item.username].upload_count += 1; // Cada item representa um upload
+      acc[item.username].upload_count += 1;
       acc[item.username].upvotes += item.upvotes || 0;
       acc[item.username].downvotes += item.downvotes || 0;
 
@@ -56,15 +64,12 @@ export async function GET() {
         downvotes: stats.downvotes
       }))
       .sort((a, b) => {
-        // Primeiro critério: diferença entre upvotes e downvotes
         const scoreA = a.upvotes - a.downvotes;
         const scoreB = b.upvotes - b.downvotes;
         if (scoreB !== scoreA) return scoreB - scoreA;
-        
-        // Segundo critério: quantidade de uploads
         return b.upload_count - a.upload_count;
       })
-      .slice(0, 10); // Pegar os top 10
+      .slice(0, 10);
 
     // Retorna os dados como resposta JSON
     return NextResponse.json(ranking);
