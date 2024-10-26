@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
 import ffmpeg from 'fluent-ffmpeg';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
@@ -99,6 +102,10 @@ export class ThumbnailGenerator {
     thumbPath: string,
     videoId: string
   ): Promise<ThumbnailResult> {
+    if (!this.THUMBNAIL_FOLDER_ID) {
+        throw new Error('GOOGLE_DRIVE_THUMBNAIL_FOLDER_ID não está definido');
+    }
+
     const fileMetadata = {
       name: `thumb-${videoId}.jpg`,
       parents: [this.THUMBNAIL_FOLDER_ID],
