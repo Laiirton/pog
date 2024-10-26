@@ -76,20 +76,14 @@ export async function GET(request: Request) {
 
     const mediaItems = await Promise.all(files.map(async (file) => {
       try {
+        await drive.files.get({ fileId: file.id as string });
         const dbInfo = fileInfoMap.get(file.id);
-        
-        // Gerar URL da thumbnail para vídeos
-        let thumbnailUrl = file.thumbnailLink;
-        if (file.mimeType?.startsWith('video')) {
-          thumbnailUrl = `https://drive.google.com/vd?id=${file.id}&authuser=0&export=download`;
-        }
-
         return {
           id: file.id,
           title: file.name,
           type: file.mimeType?.startsWith('video') ? 'video' : 'image',
           src: file.webViewLink,
-          thumbnail: thumbnailUrl,
+          thumbnail: file.thumbnailLink || `https://drive.google.com/thumbnail?id=${file.id}`,
           username: dbInfo?.username || 'Unknown',
           created_at: file.createdTime,
           upvotes: dbInfo?.upvotes || 0,
