@@ -773,15 +773,23 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
 
-  const imageSrc = item.type === 'image' 
-    ? getImageSrc(item.src) 
-    : `/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`;
+  // Modificar a lógica para usar a thumbnail corretamente
+  const imageSrc = useMemo(() => {
+    if (item.type === 'video') {
+      // Para vídeos, usar a thumbnail gerada
+      return item.thumbnail
+    } else {
+      // Para imagens, usar o proxy para o arquivo original
+      return getImageSrc(item.src)
+    }
+  }, [item])
 
   useEffect(() => {
     if (imageCache[imageSrc]) {
       setImageLoaded(true);
     } else {
-      preloadImage(imageSrc)
+      // Pré-carregar a imagem através do proxy
+      preloadImage(`/api/proxy-image?url=${encodeURIComponent(imageSrc)}`)
         .then(() => setImageLoaded(true))
         .catch(() => setImageError(true));
     }
@@ -797,7 +805,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
       <div className="relative aspect-video h-50">
         {!imageError ? (
           <Image
-            src={imageSrc}
+            src={`/api/proxy-image?url=${encodeURIComponent(imageSrc)}`}
             alt={item.title}
             layout="fill"
             objectFit="cover"
