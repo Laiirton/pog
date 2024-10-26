@@ -5,9 +5,6 @@ import { google } from 'googleapis';
 import path from 'path';
 import fs from 'fs';
 
-// Marcar a rota como dinâmica
-export const dynamic = 'force-dynamic';
-
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
   process.env.GOOGLE_DRIVE_CLIENT_SECRET,

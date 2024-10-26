@@ -374,7 +374,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   // Função para lidar com a exclusão de mídia
   const handleDeleteMedia = async (fileId: string) => {
     if (!isAdmin) return;
-    if (confirm('Tem certeza de que deseja excluir esta m��dia?')) {
+    if (confirm('Tem certeza de que deseja excluir esta mídia?')) {
       try {
         const response = await fetch(`/api/delete-media/${fileId}`, {
           method: 'DELETE',
@@ -773,13 +773,14 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
 
+  // Modificar a lógica para usar a thumbnail corretamente
   const imageSrc = useMemo(() => {
     if (item.type === 'video') {
-      // Para vídeos, usar a thumbnail do Google Drive diretamente
-      return item.thumbnail.replace('https://drive.google.com/uc?id=', '/api/file/')
+      // Para vídeos, usar a thumbnail gerada
+      return item.thumbnail
     } else {
       // Para imagens, usar o proxy para o arquivo original
-      return `/api/file/${item.id}`
+      return getImageSrc(item.src)
     }
   }, [item])
 
@@ -787,7 +788,8 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
     if (imageCache[imageSrc]) {
       setImageLoaded(true);
     } else {
-      preloadImage(imageSrc)
+      // Pré-carregar a imagem através do proxy
+      preloadImage(`/api/proxy-image?url=${encodeURIComponent(imageSrc)}`)
         .then(() => setImageLoaded(true))
         .catch(() => setImageError(true));
     }
@@ -803,7 +805,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
       <div className="relative aspect-video h-50">
         {!imageError ? (
           <Image
-            src={imageSrc}
+            src={`/api/proxy-image?url=${encodeURIComponent(imageSrc)}`}
             alt={item.title}
             layout="fill"
             objectFit="cover"

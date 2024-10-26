@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 import { ThumbnailGenerator } from '@/lib/thumbnail-generator';
 
-// Configuração do Supabase e Google OAuth2
+// Inicialize o cliente do Supabase
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -20,13 +20,11 @@ oauth2Client.setCredentials({
   refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN
 });
 
-// Marcar a rota como dinâmica
-export const dynamic = 'force-dynamic';
-
 export async function GET(request: Request) {
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
-    const userToken = new URL(request.url).searchParams.get('userToken');
+    const url = new URL(request.url);
+    const userToken = url.searchParams.get('userToken');
 
     const response = await drive.files.list({
       q: `'${process.env.GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed = false`,
