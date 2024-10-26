@@ -3,6 +3,7 @@ import { google } from 'googleapis';
 import { join } from 'path';
 import fs from 'fs';
 import os from 'os';
+import { createClient } from '@supabase/supabase-js';
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -16,6 +17,12 @@ oauth2Client.setCredentials({
 
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+// Inicializar cliente Supabase
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 interface ThumbnailResult {
   thumbnailId: string;
   thumbnailUrl: string;
@@ -26,27 +33,38 @@ export class ThumbnailGenerator {
   private static readonly THUMBNAIL_FOLDER_ID = '11hKQ-CwN7Tcwk0Aa9vbZy2fw6di5DH5N';
 
   static async generateThumbnail(videoId: string): Promise<ThumbnailResult> {
-    const tempDir = os.tmpdir();
-    const tempVideoPath = join(tempDir, `video-${videoId}.mp4`);
-    const tempThumbPath = join(tempDir, `thumb-${videoId}.jpg`);
-
     try {
-      // Download do vídeo
-      await this.downloadVideo(videoId, tempVideoPath);
+      // Tentar obter a thumbnail diretamente do Google Drive
+      const file = await drive.files.get({
+        fileId: videoId,
+        fields: 'thumbnailLink,id'
+      });
 
-      // Geração da thumbnail
-      await this.createThumbnail(tempVideoPath, tempThumbPath);
+      if (file.data.thumbnailLink) {
+        // Modificar a URL da thumbnail para uma resolução maior
+        const highResThumb = file.data.thumbnailLink.replace('=s220', '=s640');
+        
+        // Salvar no Supabase
+        await supabase.from('video_thumbnails').upsert({
+          video_id: videoId,
+          thumbnail_url: highResThumb,
+          created_at: new Date().toISOString()
+        });
 
-      // Upload da thumbnail e configuração de compartilhamento
-      const thumbnailResult = await this.uploadThumbnail(tempThumbPath, videoId);
+        return {
+          thumbnailId: videoId,
+          thumbnailUrl: highResThumb
+        };
+      }
 
-      // Limpeza dos arquivos temporários
-      this.cleanupTempFiles([tempVideoPath, tempThumbPath]);
-
-      return thumbnailResult;
+      // Se não conseguir obter a thumbnail, usar a padrão
+      throw new Error('Thumbnail not available');
     } catch (error) {
-      this.cleanupTempFiles([tempVideoPath, tempThumbPath]);
-      throw error;
+      console.error('Error generating thumbnail:', error);
+      return {
+        thumbnailId: 'default',
+        thumbnailUrl: '/images/default-video-thumb.jpg'
+      };
     }
   }
 
