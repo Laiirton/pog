@@ -83,9 +83,9 @@ export async function GET(request: Request) {
         
         // Gerar thumbnail para vídeos
         let thumbnailUrl = file.thumbnailLink;
-        if (file.mimeType?.startsWith('video') && file.id) {
+        if (file.mimeType?.startsWith('video') && file.id) { // Garantir que file.id existe
           try {
-            // Verificar cache no Supabase
+            // Verificar se já existe thumbnail no banco de dados
             const { data: thumbData } = await supabase
               .from('video_thumbnails')
               .select('thumbnail_url')
@@ -95,12 +95,21 @@ export async function GET(request: Request) {
             if (thumbData?.thumbnail_url) {
               thumbnailUrl = thumbData.thumbnail_url;
             } else {
-              // Gerar nova thumbnail
-              const { thumbnailUrl: newThumbUrl } = await ThumbnailGenerator.generateThumbnail(file.id);
+              // Gerar nova thumbnail apenas se tivermos um ID válido
+              const { thumbnailUrl: newThumbUrl, thumbnailId } = await ThumbnailGenerator.generateThumbnail(file.id);
+              
+              // Salvar referência no banco de dados
+              await supabase.from('video_thumbnails').insert({
+                video_id: file.id,
+                thumbnail_id: thumbnailId,
+                thumbnail_url: newThumbUrl
+              });
+
               thumbnailUrl = newThumbUrl;
             }
           } catch (thumbError) {
-            console.error(`Error handling thumbnail for video ${file.id}:`, thumbError);
+            console.error(`Error generating thumbnail for video ${file.id}:`, thumbError);
+            // Usar uma thumbnail padrão em caso de erro
             thumbnailUrl = '/images/default-video-thumb.jpg';
           }
         }
@@ -110,7 +119,7 @@ export async function GET(request: Request) {
           title: file.name,
           type: file.mimeType?.startsWith('video') ? 'video' : 'image',
           src: file.webViewLink,
-          thumbnail: thumbnailUrl,
+          thumbnail: thumbnailUrl || '/images/default-video-thumb.jpg', // Fallback para thumbnail padrão
           username: dbInfo?.username || 'Unknown',
           created_at: file.createdTime,
           upvotes: dbInfo?.upvotes || 0,

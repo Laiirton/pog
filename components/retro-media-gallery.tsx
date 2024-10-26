@@ -374,7 +374,7 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
   // Função para lidar com a exclusão de mídia
   const handleDeleteMedia = async (fileId: string) => {
     if (!isAdmin) return;
-    if (confirm('Tem certeza de que deseja excluir esta mdia?')) {
+    if (confirm('Tem certeza de que deseja excluir esta m��dia?')) {
       try {
         const response = await fetch(`/api/delete-media/${fileId}`, {
           method: 'DELETE',
@@ -775,18 +775,13 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
 
   const imageSrc = useMemo(() => {
     if (item.type === 'video') {
-      // Para vídeos, usar a thumbnail
-      if (item.thumbnail.startsWith('/')) {
-        // Se for uma imagem local (fallback)
-        return item.thumbnail;
-      }
-      // Se for uma URL do Google Drive
-      return `/api/proxy-image?url=${encodeURIComponent(item.thumbnail)}`;
+      // Para vídeos, usar a thumbnail do Google Drive diretamente
+      return item.thumbnail.replace('https://drive.google.com/uc?id=', '/api/file/')
     } else {
-      // Para imagens, usar o arquivo original
-      return `/api/file/${item.id}`;
+      // Para imagens, usar o proxy para o arquivo original
+      return `/api/file/${item.id}`
     }
-  }, [item]);
+  }, [item])
 
   useEffect(() => {
     if (imageCache[imageSrc]) {
