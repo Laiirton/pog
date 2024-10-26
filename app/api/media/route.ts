@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
+import { ThumbnailGenerator } from '@/lib/thumbnail-generator';
 
 // Inicialize o cliente do Supabase
 const supabase = createClient(
@@ -78,10 +79,37 @@ export async function GET(request: Request) {
       try {
         const dbInfo = fileInfoMap.get(file.id);
         
-        // Gerar URL da thumbnail para vídeos
+        // Gerar thumbnail para vídeos
         let thumbnailUrl = file.thumbnailLink;
-        if (file.mimeType?.startsWith('video')) {
-          thumbnailUrl = `https://drive.google.com/vd?id=${file.id}&authuser=0&export=download`;
+        if (file.mimeType?.startsWith('video') && file.id) { // Garantir que file.id existe
+          try {
+            // Verificar se já existe thumbnail no banco de dados
+            const { data: thumbData } = await supabase
+              .from('video_thumbnails')
+              .select('thumbnail_url')
+              .eq('video_id', file.id)
+              .single();
+
+            if (thumbData?.thumbnail_url) {
+              thumbnailUrl = thumbData.thumbnail_url;
+            } else {
+              // Gerar nova thumbnail apenas se tivermos um ID válido
+              const { thumbnailUrl: newThumbUrl, thumbnailId } = await ThumbnailGenerator.generateThumbnail(file.id);
+              
+              // Salvar referência no banco de dados
+              await supabase.from('video_thumbnails').insert({
+                video_id: file.id,
+                thumbnail_id: thumbnailId,
+                thumbnail_url: newThumbUrl
+              });
+
+              thumbnailUrl = newThumbUrl;
+            }
+          } catch (thumbError) {
+            console.error(`Error generating thumbnail for video ${file.id}:`, thumbError);
+            // Usar uma thumbnail padrão em caso de erro
+            thumbnailUrl = '/images/default-video-thumb.jpg';
+          }
         }
 
         return {
@@ -89,7 +117,7 @@ export async function GET(request: Request) {
           title: file.name,
           type: file.mimeType?.startsWith('video') ? 'video' : 'image',
           src: file.webViewLink,
-          thumbnail: thumbnailUrl,
+          thumbnail: thumbnailUrl || '/images/default-video-thumb.jpg', // Fallback para thumbnail padrão
           username: dbInfo?.username || 'Unknown',
           created_at: file.createdTime,
           upvotes: dbInfo?.upvotes || 0,
@@ -97,7 +125,7 @@ export async function GET(request: Request) {
           user_vote: file.id && userVotes[file.id] ? userVotes[file.id] : 0,
         };
       } catch (error) {
-        console.error(`File ${file.id} not found or inaccessible`);
+        console.error(`File ${file.id} not found or inaccessible:`, error);
         return null;
       }
     }));
