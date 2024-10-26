@@ -2,8 +2,6 @@
 
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
-import path from 'path';
-import fs from 'fs';
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -24,30 +22,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Se for um caminho local (começando com /)
-    if (url.startsWith('/')) {
-      const publicDir = path.join(process.cwd(), 'public');
-      const filePath = path.join(publicDir, url);
-
-      // Verificar se o arquivo existe e está dentro do diretório public
-      if (!filePath.startsWith(publicDir)) {
-        throw new Error('Invalid path');
-      }
-
-      try {
-        const fileBuffer = await fs.promises.readFile(filePath);
-        const headers = new Headers();
-        headers.set('Content-Type', 'image/jpeg');
-        headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-
-        return new NextResponse(fileBuffer, { headers });
-      } catch (error) {
-        console.error('Error reading local file:', error);
-        throw new Error('File not found');
-      }
-    }
-    
-    // Se for uma URL do Google Drive
+    // Se for uma URL do Google Drive, use a API para buscar
     if (url.includes('drive.google.com')) {
       const drive = google.drive({ version: 'v3', auth: oauth2Client });
       const fileId = url.match(/id=([^&]+)/)?.[1];
@@ -76,7 +51,7 @@ export async function GET(request: Request) {
 
       return new NextResponse(blob, { headers });
     } else {
-      // Para URLs externas
+      // Para URLs não-Google Drive, mantenha o comportamento original
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -90,21 +65,9 @@ export async function GET(request: Request) {
     }
   } catch (error) {
     console.error('Error fetching image:', error);
-    
-    // Tentar usar uma imagem de fallback em caso de erro
-    try {
-      const fallbackPath = path.join(process.cwd(), 'public', 'images', 'error-thumb.jpg');
-      const fallbackBuffer = await fs.promises.readFile(fallbackPath);
-      const headers = new Headers();
-      headers.set('Content-Type', 'image/jpeg');
-      headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-
-      return new NextResponse(fallbackBuffer, { headers });
-    } catch (fallbackError) {
-      return NextResponse.json({ 
-        error: 'Failed to fetch image', 
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, { status: 500 });
-    }
+    return NextResponse.json({ 
+      error: 'Failed to fetch image', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
