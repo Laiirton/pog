@@ -41,9 +41,61 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const { id: fileId } = params;
 
   try {
+    // Primeiro, verificar se a mídia existe no banco de dados
+    const { data: mediaData, error: mediaError } = await supabase
+      .from('media_uploads')
+      .select('id')
+      .eq('file_id', fileId)
+      .single();
+
+    if (mediaError) {
+      console.error('Error fetching media data:', mediaError);
+      return NextResponse.json({ error: 'Media not found in database' }, { status: 404 });
+    }
+
+    const mediaId = mediaData.id;
+
+    // 1. Deletar registros relacionados
+    // Deletar comentários
+    const { error: commentsError } = await supabase
+      .from('comments')
+      .delete()
+      .eq('media_id', mediaId);
+
+    if (commentsError) {
+      console.error('Error deleting comments:', commentsError);
+    }
+
+    // Deletar favoritos
+    const { error: favoritesError } = await supabase
+      .from('user_favorites')
+      .delete()
+      .eq('media_id', mediaId);
+
+    if (favoritesError) {
+      console.error('Error deleting favorites:', favoritesError);
+    }
+
+    // Atualizar votos dos usuários
+    const { data: users, error: usersError } = await supabase
+      .from('usernames')
+      .select('id, votes');
+
+    if (!usersError && users) {
+      for (const user of users) {
+        if (user.votes && user.votes[mediaId]) {
+          const newVotes = { ...user.votes };
+          delete newVotes[mediaId];
+          await supabase
+            .from('usernames')
+            .update({ votes: newVotes })
+            .eq('id', user.id);
+        }
+      }
+    }
+
+    // 2. Deletar o arquivo do Google Drive
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
-    
-    // 1. Deletar o arquivo do Google Drive
     try {
       await drive.files.delete({ fileId });
       console.log('File deleted from Google Drive:', fileId);
@@ -51,50 +103,29 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       console.error('Error deleting from Google Drive:', driveError);
       // Se o arquivo não existir no Drive, continuamos com a deleção do banco
       if ((driveError as { code?: number }).code !== 404) {
-        throw driveError;
+        console.warn('File not found in Drive or already deleted');
       }
     }
 
-    // 2. Deletar registros relacionados do banco de dados
-    // Deletar comentários
-    await supabase
-      .from('comments')
-      .delete()
-      .eq('media_id', fileId);
-
-    // Deletar favoritos
-    await supabase
-      .from('user_favorites')
-      .delete()
-      .eq('media_id', fileId);
-
-    // Remover votos dos usuários
-    const { data: users } = await supabase
-      .from('usernames')
-      .select('id, votes');
-
-    for (const user of users || []) {
-      if (user.votes && user.votes[fileId]) {
-        const newVotes = { ...user.votes };
-        delete newVotes[fileId];
-        await supabase
-          .from('usernames')
-          .update({ votes: newVotes })
-          .eq('id', user.id);
-      }
-    }
-
-    // 3. Deletar o registro principal da mídia
+    // 3. Finalmente, deletar o registro principal da mídia
     const { error: deleteError } = await supabase
       .from('media_uploads')
       .delete()
       .eq('file_id', fileId);
 
-    if (deleteError) throw deleteError;
+    if (deleteError) {
+      console.error('Error deleting media record:', deleteError);
+      throw deleteError;
+    }
 
-    return NextResponse.json({ message: 'Media and related records deleted successfully' });
+    return NextResponse.json({ 
+      message: 'Media and related records deleted successfully',
+      mediaId: mediaId,
+      fileId: fileId
+    });
+
   } catch (error) {
-    console.error('Error deleting media:', error);
+    console.error('Error in delete operation:', error);
     return NextResponse.json({ 
       error: `Failed to delete media: ${(error as Error).message}`, 
       details: error 
