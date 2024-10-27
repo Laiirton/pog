@@ -7,7 +7,14 @@ import { createClient } from '@supabase/supabase-js';
 // Criando um cliente Supabase com as credenciais do ambiente
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
+  }
 );
 
 // Definindo o tipo de dados para o ranking
@@ -18,21 +25,21 @@ interface RankingData {
   downvotes: number;
 }
 
-interface MediaStats {
-  username: string;
-  count: number;
-  sum_upvotes: number;
-  sum_downvotes: number;
-}
-
-// Função auxiliar para formatar os dados do SSE
-function formatSSE(data: RankingData[]) {
-  return `data: ${JSON.stringify(data)}\n\n`;
-}
-
 export async function GET() {
   try {
-    // Primeiro, pegamos os usuários ativos
+    // Habilita o Realtime para a tabela media_uploads
+    await supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'media_uploads' },
+        () => {
+          console.log('Database change detected');
+        }
+      )
+      .subscribe();
+
+    // Busca usuários ativos
     const { data: activeUsers, error: usersError } = await supabase
       .from('usernames')
       .select('username');
@@ -43,37 +50,19 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    // Fazemos a query diretamente na tabela media_uploads com contagem em tempo real
+    // Query otimizada com agregações
     const { data: mediaStats, error: mediaError } = await supabase
-      .from('media_uploads')
-      .select(`
-        username,
-        count,
-        sum_upvotes,
-        sum_downvotes
-      `)
-      .in('username', activeUsers.map(u => u.username))
-      .select(`
-        username,
-        count:count(id),
-        sum_upvotes:sum(upvotes),
-        sum_downvotes:sum(downvotes)
-      `)
-      .groupBy('username');
+      .rpc('get_user_ranking', {
+        user_list: activeUsers.map(u => u.username)
+      });
 
     if (mediaError) {
       console.error('Media stats error:', mediaError);
       throw mediaError;
     }
 
-    const ranking = (mediaStats || [])
-      .map((stats): RankingData => ({
-        username: stats.username,
-        upload_count: Number(stats.count) || 0,
-        upvotes: Number(stats.sum_upvotes) || 0,
-        downvotes: Number(stats.sum_downvotes) || 0
-      }))
-      .filter(stats => stats.upload_count > 0) // Remove usuários sem uploads
+    const ranking = (mediaStats as RankingData[])
+      .filter(stats => stats.upload_count > 0)
       .sort((a, b) => {
         const scoreA = a.upvotes - a.downvotes;
         const scoreB = b.upvotes - b.downvotes;
