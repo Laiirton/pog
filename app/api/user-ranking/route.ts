@@ -11,17 +11,18 @@ const supabase = createClient(
 );
 
 // Definindo o tipo de dados para o ranking
-interface UserStats {
-  upload_count: number;
-  upvotes: number;
-  downvotes: number;
-}
-
 interface RankingData {
   username: string;
   upload_count: number;
   upvotes: number;
   downvotes: number;
+}
+
+interface MediaStats {
+  username: string;
+  count: number;
+  sum_upvotes: number;
+  sum_downvotes: number;
 }
 
 // Função auxiliar para formatar os dados do SSE
@@ -43,12 +44,11 @@ export async function GET() {
 
     const activeUsernames = new Set(activeUsers.map(user => user.username));
 
-    // Query corrigida usando a sintaxe correta do PostgREST
+    // Usando uma query SQL crua para fazer a agregação
     const { data: mediaStats, error: mediaError } = await supabase
-      .from('media_uploads')
-      .select('username, upload_count:count(*), upvotes:sum(upvotes), downvotes:sum(downvotes)')
-      .in('username', Array.from(activeUsernames))
-      .groupBy('username');
+      .rpc('get_user_stats', {
+        usernames: Array.from(activeUsernames)
+      });
 
     if (mediaError) {
       console.error('Media stats error:', mediaError);
@@ -60,12 +60,12 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    const ranking = mediaStats
-      .map(stats => ({
+    const ranking = (mediaStats as MediaStats[])
+      .map((stats): RankingData => ({
         username: stats.username,
-        upload_count: Number(stats.upload_count) || 0,
-        upvotes: Number(stats.upvotes) || 0,
-        downvotes: Number(stats.downvotes) || 0
+        upload_count: Number(stats.count) || 0,
+        upvotes: Number(stats.sum_upvotes) || 0,
+        downvotes: Number(stats.sum_downvotes) || 0
       }))
       .sort((a, b) => {
         const scoreA = a.upvotes - a.downvotes;
