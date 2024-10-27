@@ -376,19 +376,31 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     if (!isAdmin) return;
     if (confirm('Tem certeza de que deseja excluir esta mídia?')) {
       try {
-        const response = await fetch(`/api/delete-media/${fileId}`, {
+        // Primeiro, deletar do Google Drive
+        const driveResponse = await fetch(`/api/delete-media/${fileId}`, {
           method: 'DELETE',
           headers: { 'admin-token': adminToken },
         });
-        const result = await response.json();
-        if (response.ok) {
-          console.log('Resultado da exclusão:', result);
-          await forceRefresh(); // Força uma atualização imediata
-        } else {
-          console.error('Falha ao excluir mídia:', result);
+
+        if (!driveResponse.ok) {
+          throw new Error('Falha ao deletar do Google Drive');
         }
+
+        // Depois, deletar do banco de dados
+        const dbResponse = await fetch(`/api/admin/media/${fileId}`, {
+          method: 'DELETE',
+          headers: { 'admin-token': adminToken },
+        });
+
+        if (!dbResponse.ok) {
+          throw new Error('Falha ao deletar do banco de dados');
+        }
+
+        console.log('Mídia deletada com sucesso');
+        await mutate(); // Atualiza a lista de mídias
       } catch (error) {
         console.error('Erro ao excluir mídia:', error);
+        alert('Falha ao excluir mídia. Por favor, tente novamente.');
       }
     }
   }
