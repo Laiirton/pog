@@ -81,6 +81,38 @@ export async function DELETE(
     const pathParts = url.pathname.split('/');
     const id = pathParts[pathParts.length - 1];
 
+    // Deletar registros relacionados primeiro
+    if (type === 'media') {
+      // Deletar comentários relacionados
+      await supabase
+        .from('comments')
+        .delete()
+        .eq('media_id', id);
+
+      // Deletar favoritos relacionados
+      await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('media_id', id);
+
+      // Remover votos relacionados dos usuários
+      const { data: users } = await supabase
+        .from('usernames')
+        .select('id, votes');
+
+      for (const user of users || []) {
+        if (user.votes && user.votes[id]) {
+          const newVotes = { ...user.votes };
+          delete newVotes[id];
+          await supabase
+            .from('usernames')
+            .update({ votes: newVotes })
+            .eq('id', user.id);
+        }
+      }
+    }
+
+    // Deletar o registro principal
     const { error } = await supabase
       .from(table)
       .delete()

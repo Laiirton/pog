@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import jwt from 'jsonwebtoken';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -34,21 +40,24 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
     
-    // Tente obter informações do arquivo antes de excluí-lo
+    // Deletar o arquivo do Google Drive
     try {
-      await drive.files.get({ fileId });
-    } catch (getError) {
-      console.error('Error getting file info:', getError);
-      return NextResponse.json({ error: `File not found or inaccessible: ${(getError as Error).message}` }, { status: 404 });
+      await drive.files.delete({ fileId });
+      console.log('File deleted from Google Drive:', fileId);
+    } catch (driveError) {
+      console.error('Error deleting from Google Drive:', driveError);
+      // Se o arquivo não existir no Drive, continuamos com a deleção do banco
+      if ((driveError as any).code !== 404) {
+        throw driveError;
+      }
     }
 
-    // Deletar o arquivo do Google Drive
-    await drive.files.delete({ fileId });
-    console.log('File deleted from Google Drive:', fileId);
-
-    return NextResponse.json({ message: 'Media deleted successfully' });
+    return NextResponse.json({ message: 'Media deleted successfully from Google Drive' });
   } catch (error) {
     console.error('Error deleting media:', error);
-    return NextResponse.json({ error: `Failed to delete media: ${(error as Error).message}`, details: error }, { status: 500 });
+    return NextResponse.json({ 
+      error: `Failed to delete media: ${(error as Error).message}`, 
+      details: error 
+    }, { status: 500 });
   }
 }

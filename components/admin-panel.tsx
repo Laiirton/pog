@@ -114,10 +114,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
     if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
 
     try {
-      const response = await fetch(`/api/admin/${type}/${id}`, {
-        method: 'DELETE',
-        headers: { 'admin-token': adminToken }
-      });
+      let response;
+      if (type === 'media') {
+        // Primeiro, buscar o file_id da mídia
+        const mediaItem = mediaData.find(item => item.id === id);
+        if (!mediaItem) throw new Error('Media not found');
+
+        // Deletar do Google Drive
+        response = await fetch(`/api/delete-media/${mediaItem.file_id}`, {
+          method: 'DELETE',
+          headers: { 'admin-token': adminToken }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete from Google Drive`);
+        }
+
+        // Deletar do banco de dados
+        response = await fetch(`/api/admin/${type}/${id}`, {
+          method: 'DELETE',
+          headers: { 'admin-token': adminToken }
+        });
+      } else {
+        // Para outros tipos, usar a rota padrão
+        response = await fetch(`/api/admin/${type}/${id}`, {
+          method: 'DELETE',
+          headers: { 'admin-token': adminToken }
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to delete ${type}`);
@@ -126,7 +150,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, adminToken }) =
       await fetchData();
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
-      alert(`Failed to delete ${type}. Please try again.`);
+      alert(`Failed to delete ${type}. ${error instanceof Error ? error.message : 'Please try again.'}`);
     }
   };
 
