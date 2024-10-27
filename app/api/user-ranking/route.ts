@@ -25,6 +25,14 @@ interface RankingData {
   downvotes: number;
 }
 
+// Interface para os dados retornados pela função RPC
+interface UserStats {
+  username: string;
+  upload_count: string | number;
+  upvotes: string | number;
+  downvotes: string | number;
+}
+
 export async function GET() {
   try {
     const { data: activeUsers, error: usersError } = await supabase
@@ -49,15 +57,15 @@ export async function GET() {
       throw mediaError;
     }
 
-    const ranking = (mediaStats || [])
-      .map((stats: any) => ({
+    const ranking = (mediaStats as UserStats[] || [])
+      .map((stats) => ({
         username: stats.username,
         upload_count: Number(stats.upload_count) || 0,
         upvotes: Number(stats.upvotes) || 0,
         downvotes: Number(stats.downvotes) || 0
       }))
-      .filter((stats: RankingData) => stats.upload_count > 0)
-      .sort((a: RankingData, b: RankingData) => {
+      .filter((stats): stats is RankingData => stats.upload_count > 0)
+      .sort((a, b) => {
         const scoreA = a.upvotes - a.downvotes;
         const scoreB = b.upvotes - b.downvotes;
         if (scoreB !== scoreA) return scoreB - scoreA;
