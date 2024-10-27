@@ -33,7 +33,7 @@ export async function GET() {
   try {
     const { data: activeUsers, error: usersError } = await supabase
       .from('usernames')
-      .select('username')
+      .select('username');
 
     if (usersError) throw usersError;
 
@@ -43,29 +43,24 @@ export async function GET() {
 
     const activeUsernames = new Set(activeUsers.map(user => user.username));
 
-    // Modificando a query para usar count e sum
+    // Query corrigida usando a sintaxe correta do PostgREST
     const { data: mediaStats, error: mediaError } = await supabase
       .from('media_uploads')
-      .select(`
-        username,
-        count(*) as upload_count,
-        sum(upvotes) as upvotes,
-        sum(downvotes) as downvotes
-      `)
-      .in('username', Array.from(activeUsernames)) as unknown as {
-        data: {
-          username: string;
-          upload_count: number;
-          upvotes: number;
-          downvotes: number;
-        }[] | null;
-        error: Error | null;
-      };
+      .select('username, upload_count:count(*), upvotes:sum(upvotes), downvotes:sum(downvotes)')
+      .in('username', Array.from(activeUsernames))
+      .groupBy('username');
 
-    if (mediaError) throw mediaError;
+    if (mediaError) {
+      console.error('Media stats error:', mediaError);
+      throw mediaError;
+    }
 
-    // Convertendo os resultados para o formato esperado
-    const ranking = (mediaStats || [])
+    if (!mediaStats) {
+      console.log('No media stats found');
+      return NextResponse.json([]);
+    }
+
+    const ranking = mediaStats
       .map(stats => ({
         username: stats.username,
         upload_count: Number(stats.upload_count) || 0,
@@ -82,7 +77,7 @@ export async function GET() {
 
     return NextResponse.json(ranking);
   } catch (error) {
-    console.error('Error fetching user ranking:', error);
+    console.error('Detailed error:', error);
     return NextResponse.json({ error: 'Error fetching user ranking' }, { status: 500 });
   }
 }
