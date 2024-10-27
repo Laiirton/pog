@@ -50,7 +50,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     } catch (driveError) {
       console.error('Error deleting from Google Drive:', driveError);
       // Se o arquivo não existir no Drive, continuamos com a deleção do banco
-      if ((driveError as any).code !== 404) {
+      if ((driveError as { code?: number }).code !== 404) {
         throw driveError;
       }
     }
