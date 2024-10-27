@@ -808,7 +808,7 @@ const MediaItem = ({ item, onClick, onDelete, preloadImage, getCachedImage, onVo
           />
         ) : (
           <div className="absolute inset-0 bg-black flex items-center justify-center">
-            <span className="text-green-500">Image not available</span>
+            <span className="text-green-500">Generating thumbnail...</span>
           </div>
         )}
         {!imageLoaded && !imageError && (
