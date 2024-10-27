@@ -27,22 +27,10 @@ interface RankingData {
 
 export async function GET() {
   try {
-    // Habilita o Realtime para a tabela media_uploads
-    await supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'media_uploads' },
-        () => {
-          console.log('Database change detected');
-        }
-      )
-      .subscribe();
-
-    // Busca usuários ativos
     const { data: activeUsers, error: usersError } = await supabase
       .from('usernames')
-      .select('username');
+      .select('username')
+      .order('username');  // Adiciona ordenação para consistência
 
     if (usersError) throw usersError;
 
@@ -50,9 +38,9 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    // Query otimizada com agregações
+    // Usando uma função RPC personalizada para fazer a agregação
     const { data: mediaStats, error: mediaError } = await supabase
-      .rpc('get_user_ranking', {
+      .rpc('get_user_stats', {
         user_list: activeUsers.map(u => u.username)
       });
 
@@ -61,9 +49,15 @@ export async function GET() {
       throw mediaError;
     }
 
-    const ranking = (mediaStats as RankingData[])
-      .filter(stats => stats.upload_count > 0)
-      .sort((a, b) => {
+    const ranking = (mediaStats || [])
+      .map((stats: any) => ({
+        username: stats.username,
+        upload_count: Number(stats.upload_count) || 0,
+        upvotes: Number(stats.upvotes) || 0,
+        downvotes: Number(stats.downvotes) || 0
+      }))
+      .filter((stats: RankingData) => stats.upload_count > 0)
+      .sort((a: RankingData, b: RankingData) => {
         const scoreA = a.upvotes - a.downvotes;
         const scoreB = b.upvotes - b.downvotes;
         if (scoreB !== scoreA) return scoreB - scoreA;
@@ -71,7 +65,14 @@ export async function GET() {
       })
       .slice(0, 10);
 
-    return NextResponse.json(ranking);
+    // Configura headers para prevenir cache
+    return new NextResponse(JSON.stringify(ranking), {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Detailed error:', error);
     return NextResponse.json({ error: 'Error fetching user ranking' }, { status: 500 });

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, ArrowBigUp, ArrowBigDown, Upload } from 'lucide-react';
+import { Trophy, ArrowBigUp, ArrowBigDown, Upload, RefreshCw } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 // Define a interface para os itens do ranking
 interface RankingItem {
@@ -16,53 +17,61 @@ export function UserRanking() {
   const [ranking, setRanking] = useState<RankingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  useEffect(() => {
-    let isSubscribed = true;
-
-    const fetchRanking = async () => {
-      try {
-        const response = await fetch('/api/user-ranking');
-        if (!response.ok) {
-          throw new Error('Failed to load ranking');
-        }
-        const data = await response.json();
-        
-        if (isSubscribed) {
-          setRanking(Array.isArray(data) ? data : []);
-          setError(null);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar ranking:', error);
-        if (isSubscribed) {
-          setError('Failed to load ranking');
-        }
-      } finally {
-        if (isSubscribed) {
-          setIsLoading(false);
-        }
+  const fetchRanking = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // Adiciona um timestamp para evitar cache
+      const response = await fetch(`/api/user-ranking?t=${new Date().getTime()}`);
+      if (!response.ok) {
+        throw new Error('Failed to load ranking');
       }
-    };
-
-    // Busca inicial
-    fetchRanking();
-
-    // Atualiza a cada 3 segundos
-    const interval = setInterval(fetchRanking, 3000);
-
-    // Cleanup
-    return () => {
-      isSubscribed = false;
-      clearInterval(interval);
-    };
+      const data = await response.json();
+      setRanking(Array.isArray(data) ? data : []);
+      setError(null);
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error('Erro ao buscar ranking:', error);
+      setError('Failed to load ranking');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  // Atualiza quando o componente é montado
+  useEffect(() => {
+    fetchRanking();
+  }, [fetchRanking]);
+
+  // Atualização automática a cada 3 segundos
+  useEffect(() => {
+    const interval = setInterval(fetchRanking, 3000);
+    return () => clearInterval(interval);
+  }, [fetchRanking]);
+
+  const handleRefresh = () => {
+    fetchRanking();
+  };
 
   return (
     <div className="bg-blue-900 bg-opacity-20 p-6 rounded-lg border-2 border-cyan-400 text-cyan-400 w-full h-full shadow-lg shadow-cyan-500/30 relative overflow-hidden">
-      <h2 className="text-3xl font-bold mb-6 text-center text-cyan-300" data-text="Ranking Poggers">
-        <Trophy className="inline-block mr-2 mb-1" size={28} />
-        The Poggers
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-center text-cyan-300 flex-grow" data-text="Ranking Poggers">
+          <Trophy className="inline-block mr-2 mb-1" size={28} />
+          The Poggers
+        </h2>
+        <Button
+          onClick={handleRefresh}
+          className="bg-cyan-600 hover:bg-cyan-700 text-white p-2 rounded-full"
+          disabled={isLoading}
+        >
+          <RefreshCw 
+            size={20} 
+            className={`${isLoading ? 'animate-spin' : ''}`}
+          />
+        </Button>
+      </div>
 
       {isLoading ? (
         <div className="text-center py-8">
