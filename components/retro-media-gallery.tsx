@@ -376,24 +376,13 @@ export function RetroMediaGalleryComponent({ onLogout }: RetroMediaGalleryCompon
     if (!isAdmin) return;
     if (confirm('Tem certeza de que deseja excluir esta mídia?')) {
       try {
-        // Primeiro, deletar do Google Drive
-        const driveResponse = await fetch(`/api/delete-media/${fileId}`, {
+        const response = await fetch(`/api/delete-media/${fileId}`, {
           method: 'DELETE',
           headers: { 'admin-token': adminToken },
         });
 
-        if (!driveResponse.ok) {
-          throw new Error('Falha ao deletar do Google Drive');
-        }
-
-        // Depois, deletar do banco de dados
-        const dbResponse = await fetch(`/api/admin/media/${fileId}`, {
-          method: 'DELETE',
-          headers: { 'admin-token': adminToken },
-        });
-
-        if (!dbResponse.ok) {
-          throw new Error('Falha ao deletar do banco de dados');
+        if (!response.ok) {
+          throw new Error('Falha ao deletar mídia');
         }
 
         console.log('Mídia deletada com sucesso');
