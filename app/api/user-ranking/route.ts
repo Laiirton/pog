@@ -32,6 +32,7 @@ function formatSSE(data: RankingData[]) {
 
 export async function GET() {
   try {
+    // Primeiro, pegamos os usuários ativos
     const { data: activeUsers, error: usersError } = await supabase
       .from('usernames')
       .select('username');
@@ -42,31 +43,37 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    const activeUsernames = new Set(activeUsers.map(user => user.username));
-
-    // Usando uma query SQL crua para fazer a agregação
+    // Fazemos a query diretamente na tabela media_uploads com contagem em tempo real
     const { data: mediaStats, error: mediaError } = await supabase
-      .rpc('get_user_stats', {
-        usernames: Array.from(activeUsernames)
-      });
+      .from('media_uploads')
+      .select(`
+        username,
+        count,
+        sum_upvotes,
+        sum_downvotes
+      `)
+      .in('username', activeUsers.map(u => u.username))
+      .select(`
+        username,
+        count:count(id),
+        sum_upvotes:sum(upvotes),
+        sum_downvotes:sum(downvotes)
+      `)
+      .groupBy('username');
 
     if (mediaError) {
       console.error('Media stats error:', mediaError);
       throw mediaError;
     }
 
-    if (!mediaStats) {
-      console.log('No media stats found');
-      return NextResponse.json([]);
-    }
-
-    const ranking = (mediaStats as MediaStats[])
+    const ranking = (mediaStats || [])
       .map((stats): RankingData => ({
         username: stats.username,
         upload_count: Number(stats.count) || 0,
         upvotes: Number(stats.sum_upvotes) || 0,
         downvotes: Number(stats.sum_downvotes) || 0
       }))
+      .filter(stats => stats.upload_count > 0) // Remove usuários sem uploads
       .sort((a, b) => {
         const scoreA = a.upvotes - a.downvotes;
         const scoreB = b.upvotes - b.downvotes;
