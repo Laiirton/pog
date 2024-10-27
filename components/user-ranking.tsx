@@ -18,32 +18,39 @@ export function UserRanking() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Função para buscar os dados do ranking
-    const fetchRanking = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await fetch('/api/user-ranking');
-        if (!response.ok) {
-          throw new Error('Failed to load ranking');
+    let eventSource: EventSource;
+
+    const connectToSSE = () => {
+      setIsLoading(true);
+      eventSource = new EventSource('/api/user-ranking');
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setRanking(Array.isArray(data) ? data : []);
+          setIsLoading(false);
+        } catch (error) {
+          console.error('Error parsing ranking data:', error);
+          setError('Failed to parse ranking data');
         }
-        const data = await response.json();
-        // Verifica se data é um array e se tem conteúdo
-        setRanking(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Erro ao buscar ranking:', error);
-        setError('Failed to load ranking');
-      } finally {
-        setIsLoading(false);
-      }
+      };
+
+      eventSource.onerror = () => {
+        setError('Connection lost. Retrying...');
+        eventSource.close();
+        // Tenta reconectar após 5 segundos
+        setTimeout(connectToSSE, 5000);
+      };
     };
 
-    // Chama a função fetchRanking imediatamente
-    fetchRanking();
-    // Configura um intervalo para atualizar o ranking a cada minuto
-    const interval = setInterval(fetchRanking, 60000); // Update every minute
-    // Limpa o intervalo quando o componente é desmontado
-    return () => clearInterval(interval);
+    connectToSSE();
+
+    // Limpa a conexão quando o componente é desmontado
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
   }, []);
 
   return (
