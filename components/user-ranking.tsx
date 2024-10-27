@@ -18,38 +18,42 @@ export function UserRanking() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let eventSource: EventSource;
+    let isSubscribed = true;
 
-    const connectToSSE = () => {
-      setIsLoading(true);
-      eventSource = new EventSource('/api/user-ranking');
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          setRanking(Array.isArray(data) ? data : []);
-          setIsLoading(false);
-        } catch (error) {
-          console.error('Error parsing ranking data:', error);
-          setError('Failed to parse ranking data');
+    const fetchRanking = async () => {
+      try {
+        const response = await fetch('/api/user-ranking');
+        if (!response.ok) {
+          throw new Error('Failed to load ranking');
         }
-      };
-
-      eventSource.onerror = () => {
-        setError('Connection lost. Retrying...');
-        eventSource.close();
-        // Tenta reconectar após 5 segundos
-        setTimeout(connectToSSE, 5000);
-      };
+        const data = await response.json();
+        
+        if (isSubscribed) {
+          setRanking(Array.isArray(data) ? data : []);
+          setError(null);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar ranking:', error);
+        if (isSubscribed) {
+          setError('Failed to load ranking');
+        }
+      } finally {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      }
     };
 
-    connectToSSE();
+    // Busca inicial
+    fetchRanking();
 
-    // Limpa a conexão quando o componente é desmontado
+    // Atualiza a cada 3 segundos
+    const interval = setInterval(fetchRanking, 3000);
+
+    // Cleanup
     return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
+      isSubscribed = false;
+      clearInterval(interval);
     };
   }, []);
 
