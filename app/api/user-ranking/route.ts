@@ -43,35 +43,27 @@ export async function GET() {
 
     const activeUsernames = new Set(activeUsers.map(user => user.username));
 
-    const { data: mediaData, error: mediaError } = await supabase
+    // Modificando a query para usar count e sum
+    const { data: mediaStats, error: mediaError } = await supabase
       .from('media_uploads')
-      .select('username, upvotes, downvotes')
+      .select(`
+        username,
+        upload_count:count(*),
+        upvotes:sum(upvotes),
+        downvotes:sum(downvotes)
+      `)
       .in('username', Array.from(activeUsernames))
+      .group('username');
 
     if (mediaError) throw mediaError;
 
-    const userStats = mediaData.reduce((acc: Record<string, UserStats>, item) => {
-      if (!acc[item.username]) {
-        acc[item.username] = {
-          upload_count: 0,
-          upvotes: 0,
-          downvotes: 0
-        };
-      }
-
-      acc[item.username].upload_count += 1;
-      acc[item.username].upvotes += item.upvotes || 0;
-      acc[item.username].downvotes += item.downvotes || 0;
-
-      return acc;
-    }, {});
-
-    const ranking = Object.entries(userStats)
-      .map(([username, stats]) => ({
-        username,
-        upload_count: stats.upload_count,
-        upvotes: stats.upvotes,
-        downvotes: stats.downvotes
+    // Convertendo os resultados para o formato esperado
+    const ranking = (mediaStats || [])
+      .map(stats => ({
+        username: stats.username,
+        upload_count: Number(stats.upload_count) || 0,
+        upvotes: Number(stats.upvotes) || 0,
+        downvotes: Number(stats.downvotes) || 0
       }))
       .sort((a, b) => {
         const scoreA = a.upvotes - a.downvotes;
@@ -81,7 +73,7 @@ export async function GET() {
       })
       .slice(0, 10);
 
-    return NextResponse.json(ranking || []);
+    return NextResponse.json(ranking);
   } catch (error) {
     console.error('Error fetching user ranking:', error);
     return NextResponse.json({ error: 'Error fetching user ranking' }, { status: 500 });
