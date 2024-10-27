@@ -48,12 +48,19 @@ export async function GET() {
       .from('media_uploads')
       .select(`
         username,
-        upload_count:count(*),
-        upvotes:sum(upvotes),
-        downvotes:sum(downvotes)
+        count(*) as upload_count,
+        sum(upvotes) as upvotes,
+        sum(downvotes) as downvotes
       `)
-      .in('username', Array.from(activeUsernames))
-      .group('username');
+      .in('username', Array.from(activeUsernames)) as unknown as {
+        data: {
+          username: string;
+          upload_count: number;
+          upvotes: number;
+          downvotes: number;
+        }[] | null;
+        error: any;
+      };
 
     if (mediaError) throw mediaError;
 
