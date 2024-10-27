@@ -59,7 +59,7 @@ export async function GET() {
           upvotes: number;
           downvotes: number;
         }[] | null;
-        error: any;
+        error: Error | null;
       };
 
     if (mediaError) throw mediaError;
