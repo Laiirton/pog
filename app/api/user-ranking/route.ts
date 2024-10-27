@@ -18,8 +18,15 @@ interface UserStats {
   downvotes: number;
 }
 
+interface RankingData {
+  username: string;
+  upload_count: number;
+  upvotes: number;
+  downvotes: number;
+}
+
 // Função auxiliar para formatar os dados do SSE
-function formatSSE(data: any) {
+function formatSSE(data: RankingData[]) {
   return `data: ${JSON.stringify(data)}\n\n`;
 }
 
