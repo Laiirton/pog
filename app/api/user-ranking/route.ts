@@ -7,14 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 // Criando um cliente Supabase com as credenciais do ambiente
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    realtime: {
-      params: {
-        eventsPerSecond: 10
-      }
-    }
-  }
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 // Definindo o tipo de dados para o ranking
@@ -23,58 +16,26 @@ interface RankingData {
   upload_count: number;
   upvotes: number;
   downvotes: number;
-}
-
-// Interface para os dados retornados pela função RPC
-interface UserStats {
-  username: string;
-  upload_count: string | number;
-  upvotes: string | number;
-  downvotes: string | number;
+  total_score: number;
+  last_updated: string;
 }
 
 export async function GET() {
   try {
-    const { data: activeUsers, error: usersError } = await supabase
-      .from('usernames')
-      .select('username')
-      .order('username');  // Adiciona ordenação para consistência
+    // Buscar ranking direto da tabela user_rankings
+    const { data: ranking, error } = await supabase
+      .from('user_rankings')
+      .select('*')
+      .order('total_score', { ascending: false })
+      .order('upload_count', { ascending: false })
+      .limit(10);
 
-    if (usersError) throw usersError;
+    if (error) throw error;
 
-    if (!activeUsers || activeUsers.length === 0) {
-      return NextResponse.json([]);
-    }
+    // Forçar atualização do ranking
+    await supabase.rpc('refresh_all_rankings');
 
-    // Usando uma função RPC personalizada para fazer a agregação
-    const { data: mediaStats, error: mediaError } = await supabase
-      .rpc('get_user_stats', {
-        user_list: activeUsers.map(u => u.username)
-      });
-
-    if (mediaError) {
-      console.error('Media stats error:', mediaError);
-      throw mediaError;
-    }
-
-    const ranking = (mediaStats as UserStats[] || [])
-      .map((stats) => ({
-        username: stats.username,
-        upload_count: Number(stats.upload_count) || 0,
-        upvotes: Number(stats.upvotes) || 0,
-        downvotes: Number(stats.downvotes) || 0
-      }))
-      .filter((stats): stats is RankingData => stats.upload_count > 0)
-      .sort((a, b) => {
-        const scoreA = a.upvotes - a.downvotes;
-        const scoreB = b.upvotes - b.downvotes;
-        if (scoreB !== scoreA) return scoreB - scoreA;
-        return b.upload_count - a.upload_count;
-      })
-      .slice(0, 10);
-
-    // Configura headers para prevenir cache
-    return new NextResponse(JSON.stringify(ranking), {
+    return NextResponse.json(ranking || [], {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         'Pragma': 'no-cache',
@@ -82,7 +43,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Detailed error:', error);
+    console.error('Error fetching ranking:', error);
     return NextResponse.json({ error: 'Error fetching user ranking' }, { status: 500 });
   }
 }

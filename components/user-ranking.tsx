@@ -10,6 +10,8 @@ interface RankingItem {
   upload_count: number;
   upvotes: number;
   downvotes: number;
+  total_score: number;
+  last_updated: string;
 }
 
 export function UserRanking() {
@@ -107,6 +109,10 @@ export function UserRanking() {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
+                <span className="font-bold text-sm bg-cyan-500 text-black px-2 py-1 rounded-full shadow-md flex items-center">
+                  <Trophy className="mr-1" size={14} />
+                  {item.total_score}
+                </span>
                 <span className="font-bold text-sm bg-green-500 text-black px-2 py-1 rounded-full shadow-md flex items-center">
                   <ArrowBigUp className="mr-1" size={14} />
                   {item.upvotes}
