@@ -24,8 +24,7 @@ export function UserRanking() {
   const fetchRanking = useCallback(async () => {
     try {
       setIsLoading(true);
-      // Adiciona um timestamp para evitar cache
-      const response = await fetch(`/api/user-ranking?t=${new Date().getTime()}`);
+      const response = await fetch('/api/user-ranking');
       if (!response.ok) {
         throw new Error('Failed to load ranking');
       }
@@ -46,9 +45,9 @@ export function UserRanking() {
     fetchRanking();
   }, [fetchRanking]);
 
-  // Atualização automática a cada 3 segundos
+  // Atualização a cada 5 segundos (tempo suficiente para manter atualizado sem sobrecarregar)
   useEffect(() => {
-    const interval = setInterval(fetchRanking, 3000);
+    const interval = setInterval(fetchRanking, 5000);
     return () => clearInterval(interval);
   }, [fetchRanking]);
 

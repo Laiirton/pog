@@ -32,9 +32,6 @@ export async function GET() {
 
     if (error) throw error;
 
-    // Forçar atualização do ranking
-    await supabase.rpc('refresh_all_rankings');
-
     return NextResponse.json(ranking || [], {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
