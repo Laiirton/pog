@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, ArrowBigUp, ArrowBigDown, Upload, RefreshCw } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Trophy, ArrowBigUp, ArrowBigDown, Upload } from 'lucide-react';
 
 // Define a interface para os itens do ranking
 interface RankingItem {
@@ -15,11 +14,9 @@ interface RankingItem {
 }
 
 export function UserRanking() {
-  // Estado para armazenar os dados do ranking
   const [ranking, setRanking] = useState<RankingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   const fetchRanking = useCallback(async () => {
     try {
@@ -31,7 +28,6 @@ export function UserRanking() {
       const data = await response.json();
       setRanking(Array.isArray(data) ? data : []);
       setError(null);
-      setLastUpdate(new Date());
     } catch (error) {
       console.error('Erro ao buscar ranking:', error);
       setError('Failed to load ranking');
@@ -40,20 +36,10 @@ export function UserRanking() {
     }
   }, []);
 
-  // Atualiza quando o componente é montado
+  // Atualiza apenas quando o componente é montado
   useEffect(() => {
     fetchRanking();
   }, [fetchRanking]);
-
-  // Atualização a cada 5 segundos (tempo suficiente para manter atualizado sem sobrecarregar)
-  useEffect(() => {
-    const interval = setInterval(fetchRanking, 5000);
-    return () => clearInterval(interval);
-  }, [fetchRanking]);
-
-  const handleRefresh = () => {
-    fetchRanking();
-  };
 
   return (
     <div className="bg-blue-900 bg-opacity-20 p-6 rounded-lg border-2 border-cyan-400 text-cyan-400 w-full h-full shadow-lg shadow-cyan-500/30 relative overflow-hidden">
@@ -62,16 +48,6 @@ export function UserRanking() {
           <Trophy className="inline-block mr-2 mb-1" size={28} />
           The Poggers
         </h2>
-        <Button
-          onClick={handleRefresh}
-          className="bg-cyan-600 hover:bg-cyan-700 text-white p-2 rounded-full"
-          disabled={isLoading}
-        >
-          <RefreshCw 
-            size={20} 
-            className={`${isLoading ? 'animate-spin' : ''}`}
-          />
-        </Button>
       </div>
 
       {isLoading ? (
